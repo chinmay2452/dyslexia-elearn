@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="400" viewBox="0 0 600 400" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <!-- House -->
+    <path d="M250 200 L300 150 L350 200 L350 300 L250 300 Z" fill="#1B4F72"/>
+    <!-- Roof -->
+    <path d="M240 200 L300 140 L360 200" fill="#E67E22" stroke="#E67E22" stroke-width="2"/>
+    <!-- Door -->
+    <rect x="285" y="250" width="30" height="50" fill="white"/>
+    <!-- Window -->
+    <circle cx="300" cy="220" r="10" fill="white"/>
+    <!-- Bushes -->
+    <ellipse cx="240" cy="300" rx="20" ry="15" fill="#7CB342"/>
+    <ellipse cx="360" cy="300" rx="20" ry="15" fill="#7CB342"/>
+    <!-- Letters and Numbers -->
+    <text x="380" y="180" font-family="Arial" font-size="24" fill="#E74C3C">A</text>
+    <text x="360" y="160" font-family="Arial" font-size="24" fill="#3498DB">B</text>
+    <text x="220" y="170" font-family="Arial" font-size="24" fill="#9B59B6">C</text>
+    <text x="400" y="200" font-family="Arial" font-size="24" fill="#F1C40F">1</text>
+    <text x="200" y="190" font-family="Arial" font-size="24" fill="#2ECC71">2</text>
+    <text x="390" y="150" font-family="Arial" font-size="24" fill="#E67E22">3</text>
+    <text x="340" y="140" font-family="Arial" font-size="24" fill="#3498DB">4</text>
+    <!-- Background Arc -->
+    <path d="M150 300 Q300 200 450 300" fill="none" stroke="#AED581" stroke-width="60"/>
+</svg> 
