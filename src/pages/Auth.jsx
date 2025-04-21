@@ -101,7 +101,7 @@ const Auth = () => {
                 <div className="text-center">
                     <button
                         onClick={() => setIsLogin(!isLogin)}
-                        className="font-dyslexic text-[#2E4053] hover:text-[#34495E]"
+                        className="font-dyslexic text-white hover:text-[#34495E]"
                     >
                         {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
                     </button>
