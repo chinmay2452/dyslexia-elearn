@@ -12,7 +12,6 @@ const Auth = () => {
 
     const handleSubmit = (e) => {
         e.preventDefault();
-        // TODO: Implement authentication logic
         console.log('Form submitted:', formData);
     };
 
@@ -48,14 +47,16 @@ const Auth = () => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {!isLogin && (
                         <div>
+
                             <label htmlFor="name" className="font-dyslexic block text-gray-700 mb-1">Name</label>
                             <input
                                 type="text"
                                 id="name"
                                 name="name"
+                                placeholder='Enter your name'
                                 value={formData.name}
                                 onChange={handleChange}
-                                className="font-dyslexic w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-colors duration-200"
+                                className="placeholder:text-gray-500 text-black font-dyslexic w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-colors duration-200"
                                 required
                             />
                         </div>
@@ -67,9 +68,10 @@ const Auth = () => {
                             type="email"
                             id="email"
                             name="email"
+                            placeholder='Enter your email'
                             value={formData.email}
                             onChange={handleChange}
-                            className="font-dyslexic w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-colors duration-200"
+                            className="placeholder:text-gray-500 text-black font-dyslexic w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-colors duration-200"
                             required
                         />
                     </div>
@@ -80,9 +82,10 @@ const Auth = () => {
                             type="password"
                             id="password"
                             name="password"
+                            placeholder='Enter your password'
                             value={formData.password}
                             onChange={handleChange}
-                            className="font-dyslexic w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-colors duration-200"
+                            className="placeholder:text-gray-500 text-black font-dyslexic w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-colors duration-200"
                             required
                         />
                     </div>
