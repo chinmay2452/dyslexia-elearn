@@ -23,7 +23,7 @@ const Auth = () => {
     };
 
     return (
-        <div className="min-h-screen bg-[#C5E1A5] flex items-center justify-center px-4">
+        <div className="min-h-screen bg-[#F5F5F5] flex items-center justify-center px-4">
             <div className="max-w-md w-full bg-white rounded-xl shadow-lg p-8 space-y-6">
                 <div className="text-center">
                     <div className="w-64 h-48 mx-auto mb-4 relative">
@@ -33,13 +33,13 @@ const Auth = () => {
                             className="w-full h-full object-contain"
                         />
                     </div>
-                    <h2 className="font-dyslexic text-4xl font-bold text-[#2E4053] mb-6 tracking-wider">
+                    <h2 className="font-dyslexic text-4xl font-bold text-[#2C3E50] mb-6 tracking-wider">
                         LEARN BRIGHT
                     </h2>
-                    <h1 className="font-dyslexic text-3xl font-bold text-[#2E4053] mb-2">
+                    <h1 className="font-dyslexic text-3xl font-bold text-[#2C3E50] mb-2">
                         {isLogin ? 'Welcome Back!' : 'Join Learn Brightly'}
                     </h1>
-                    <p className="font-dyslexic text-gray-600">
+                    <p className="font-dyslexic text-[#34495E]">
                         {isLogin ? 'Continue your learning journey' : 'Start your learning journey today'}
                     </p>
                 </div>
@@ -47,8 +47,7 @@ const Auth = () => {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {!isLogin && (
                         <div>
-
-                            <label htmlFor="name" className="font-dyslexic block text-gray-700 mb-1">Name</label>
+                            <label htmlFor="name" className="font-dyslexic block text-[#34495E] mb-1">Name</label>
                             <input
                                 type="text"
                                 id="name"
@@ -56,14 +55,14 @@ const Auth = () => {
                                 placeholder='Enter your name'
                                 value={formData.name}
                                 onChange={handleChange}
-                                className="placeholder:text-gray-500 text-black font-dyslexic w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-colors duration-200"
+                                className="placeholder:text-[#95A5A6] text-[#2C3E50] font-dyslexic w-full px-4 py-2 border-2 border-[#BDC3C7] rounded-lg focus:ring-2 focus:ring-[#3498DB] focus:border-[#3498DB] outline-none transition-colors duration-200 bg-[#F8F9F9]"
                                 required
                             />
                         </div>
                     )}
 
                     <div>
-                        <label htmlFor="email" className="font-dyslexic block text-gray-700 mb-1">Email</label>
+                        <label htmlFor="email" className="font-dyslexic block text-[#34495E] mb-1">Email</label>
                         <input
                             type="email"
                             id="email"
@@ -71,13 +70,13 @@ const Auth = () => {
                             placeholder='Enter your email'
                             value={formData.email}
                             onChange={handleChange}
-                            className="placeholder:text-gray-500 text-black font-dyslexic w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-colors duration-200"
+                            className="placeholder:text-[#95A5A6] text-[#2C3E50] font-dyslexic w-full px-4 py-2 border-2 border-[#BDC3C7] rounded-lg focus:ring-2 focus:ring-[#3498DB] focus:border-[#3498DB] outline-none transition-colors duration-200 bg-[#F8F9F9]"
                             required
                         />
                     </div>
 
                     <div>
-                        <label htmlFor="password" className="font-dyslexic block text-gray-700 mb-1">Password</label>
+                        <label htmlFor="password" className="font-dyslexic block text-[#34495E] mb-1">Password</label>
                         <input
                             type="password"
                             id="password"
@@ -85,14 +84,14 @@ const Auth = () => {
                             placeholder='Enter your password'
                             value={formData.password}
                             onChange={handleChange}
-                            className="placeholder:text-gray-500 text-black font-dyslexic w-full px-4 py-2 border-2 border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-purple-500 outline-none transition-colors duration-200"
+                            className="placeholder:text-[#95A5A6] text-[#2C3E50] font-dyslexic w-full px-4 py-2 border-2 border-[#BDC3C7] rounded-lg focus:ring-2 focus:ring-[#3498DB] focus:border-[#3498DB] outline-none transition-colors duration-200 bg-[#F8F9F9]"
                             required
                         />
                     </div>
 
                     <button
                         type="submit"
-                        className="font-dyslexic w-full bg-[#2E4053] text-white py-2 px-4 rounded-lg hover:bg-[#34495E] transition duration-200"
+                        className="font-dyslexic w-full bg-[#3498DB] text-white py-2 px-4 rounded-lg hover:bg-[#2980B9] transition duration-200"
                     >
                         {isLogin ? 'Login' : 'Sign Up'}
                     </button>
@@ -101,7 +100,7 @@ const Auth = () => {
                 <div className="text-center">
                     <button
                         onClick={() => setIsLogin(!isLogin)}
-                        className="font-dyslexic text-white hover:text-[#34495E]"
+                        className="font-dyslexic text-[#3498DB] hover:text-[#2980B9]"
                     >
                         {isLogin ? "Don't have an account? Sign up" : "Already have an account? Login"}
                     </button>
