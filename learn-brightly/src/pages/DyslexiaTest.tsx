@@ -1,5 +1,6 @@
 
 import React, { useState } from 'react';
+import {saveQuizResult} from '../models/saveresult'
 import { Button } from "../components/button";
 import { RadioGroup, RadioGroupItem } from "../components/radio-group";
 import { useToast } from "../hooks/use-toast";
@@ -8,6 +9,7 @@ import DyslexiaHeader from '../components/DyslexiaHeader';
 import ReadingText from '../components/ReadingText';
 import { Alert, AlertDescription, AlertTitle } from "../components/alert";
 import TestResults from '../components/TestResults';
+import {auth} from '../lib/firebase';
 
 const questions = [
   {
@@ -145,6 +147,8 @@ const DyslexiaTest = () => {
     
     setScore(percentageScore);
     setTestCompleted(true);
+    const userId = auth.currentUser?.uid || 'anonymous';
+  saveQuizResult(percentageScore, userId);
   };
 
   return (
@@ -197,14 +201,13 @@ const DyslexiaTest = () => {
             </div>
             
             <div className="flex justify-between items-center">
-              <Button 
-                variant="outline" 
+              <button 
                 onClick={handlePrevious}
                 disabled={currentQuestionIndex === 0}
                 className="flex items-center gap-2"
               >
                 <ArrowLeft className="h-4 w-4" /> Previous
-              </Button>
+              </button>
               
               <Button 
                 onClick={handleNext}
