@@ -148,7 +148,7 @@ const AuthPage: React.FC = () => {
                     onChange={(e) =>
                       setLoginData({ ...loginData, email: e.target.value })
                     }
-                    placeholder="your@email.com"
+                    placeholder="XYZ@email.com"
                     className="rounded-xl text-black"
                     required
                   />
@@ -163,7 +163,7 @@ const AuthPage: React.FC = () => {
                       onChange={(e) =>
                         setLoginData({ ...loginData, password: e.target.value })
                       }
-                      placeholder="••••••••"
+                      placeholder="password"
                       className="rounded-xl text-black pr-10"
                       required
                     />
@@ -232,7 +232,7 @@ const AuthPage: React.FC = () => {
                     onChange={(e) =>
                       setSignupData({ ...signupData, fullName: e.target.value })
                     }
-                    placeholder="Alex Johnson"
+                    placeholder="Name"
                     className="rounded-xl text-black"
                     required
                   />
@@ -246,7 +246,7 @@ const AuthPage: React.FC = () => {
                     onChange={(e) =>
                       setSignupData({ ...signupData, age: e.target.value })
                     }
-                    placeholder="e.g. 12"
+                    placeholder="Age"
                     className="rounded-xl text-black"
                     required
                     min="5"
@@ -279,7 +279,7 @@ const AuthPage: React.FC = () => {
                     onChange={(e) =>
                       setSignupData({ ...signupData, email: e.target.value })
                     }
-                    placeholder="your@email.com"
+                    placeholder="XYZ@email.com"
                     className="rounded-xl text-black"
                     required
                   />
@@ -297,7 +297,7 @@ const AuthPage: React.FC = () => {
                           password: e.target.value,
                         })
                       }
-                      placeholder="••••••••"
+                      placeholder="password"
                       className="rounded-xl text-black pr-10"
                       required
                       minLength={8}
