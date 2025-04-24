@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="600" height="200" viewBox="0 0 600 200" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="skyGradient" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" style="stop-color:#87CEEB;stop-opacity:0.6" />
+      <stop offset="100%" style="stop-color:#87CEEB;stop-opacity:0.2" />
+    </linearGradient>
+  </defs>
+
+  <!-- Background elements -->
+  <path d="M300,40 Q400,30 500,60 Q550,80 600,70 L600,150 Q500,140 400,160 Q350,170 300,160 Z" 
+        fill="url(#skyGradient)" />
+  
+  <!-- Green hills -->
+  <path d="M350,140 Q400,120 450,140 Q500,160 550,150 L600,200 L300,200 Z" 
+        fill="#90EE90" opacity="0.3" />
+
+  <!-- Main text -->
+  <text x="40" y="90" 
+        style="font-family:'Open Sans', sans-serif; font-weight: 1000; font-size: 64px; fill: #2F4F4F;">
+    LEARN BRIGHT
+  </text>
+
+  <!-- Subtitle -->
+  <text x="40" y="125" 
+        style="font-family:'Open Sans', sans-serif; font-size: 20px; fill: #666666; letter-spacing: 1px;">
+    DYSLEXIA IS A DIFFERENT KIND OF 
+  </text>
+  <text x="40" y="150" 
+        style="font-family:'Open Sans', sans-serif; font-size: 20px; fill: #666666; letter-spacing: 1px;">
+    BRILLIANCE
+  </text>
+</svg> 
