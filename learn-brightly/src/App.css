@@ -2,14 +2,41 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --background: 0 0% 100%;
+  --foreground: 222.2 84% 4.9%;
+  --primary: 262 98% 77%;
+}
+
 html, body, #root {
-  max-width: 1280px;
-  margin: 0 auto;
+  max-width: 100%;
+  margin: 0;
   height: 100%;
   width: 100%;
   padding: 0;
   background-color: white;
-  text-align: center;
+  color: #213547;
+}
+
+/* Reset color scheme to light */
+@media (prefers-color-scheme: dark) {
+  :root {
+    color: #213547;
+    background-color: #ffffff;
+  }
+}
+
+.bg-gradient-to-b {
+  background-image: linear-gradient(to bottom, var(--tw-gradient-stops));
+}
+
+.from-background {
+  --tw-gradient-from: hsl(var(--background));
+  --tw-gradient-stops: var(--tw-gradient-from), var(--tw-gradient-to, hsl(var(--background) / 0));
+}
+
+.to-pastel-blue\/30 {
+  --tw-gradient-to: rgb(184 227 255 / 0.3);
 }
 
 .logo {
