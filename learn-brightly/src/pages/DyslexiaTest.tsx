@@ -1,8 +1,7 @@
-
 import React, { useState } from 'react';
 import { Button } from "../components/button";
 import { RadioGroup, RadioGroupItem } from "../components/radio-group";
-import { useToast } from "../hooks/use-toast";
+import {useToast} from "../hooks/use-toast";
 import { AlertCircle, ArrowLeft, ArrowRight, Check } from "lucide-react";
 import DyslexiaHeader from '../components/DyslexiaHeader';
 import ReadingText from '../components/ReadingText';
@@ -102,6 +101,7 @@ const DyslexiaTest = () => {
   const totalQuestions = questions.length;
   const currentQuestion = questions[currentQuestionIndex];
 
+
   const handleOptionSelect = (value: string) => {
     setAnswers({
       ...answers,
@@ -148,14 +148,14 @@ const DyslexiaTest = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-pastel-blue/30 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-background to-pastel-blue/30 pb-24 text-gray-800">
       <DyslexiaHeader />
       
       <main className="max-w-4xl mx-auto px-4 py-6">
         {!testCompleted ? (
           <div className="bg-white rounded-2xl p-6 shadow-lg animate-pop">
             <div className="mb-6">
-              <h1 className="text-2xl font-bold mb-2">Dyslexia Screening Test</h1>
+              <h1 className="text-2xl font-bold mb-2 text-gray-800">Dyslexia Screening Test</h1>
               <ReadingText>
                 Answer these questions to help identify if you might have signs of dyslexia. 
                 This is not a formal diagnosis but can help you understand if you should seek further assessment.
@@ -175,7 +175,7 @@ const DyslexiaTest = () => {
             </div>
             
             <div className="mb-8 p-4 bg-pastel-peach/30 rounded-xl">
-              <h2 className="text-xl font-bold mb-4">{currentQuestion.question}</h2>
+              <h2 className="text-xl font-bold mb-4 text-gray-800">{currentQuestion.question}</h2>
               
               <RadioGroup 
                 value={answers[currentQuestion.id] || ""}
@@ -187,7 +187,7 @@ const DyslexiaTest = () => {
                     <RadioGroupItem value={option.value} id={`${currentQuestion.id}-${option.value}`} />
                     <label 
                       htmlFor={`${currentQuestion.id}-${option.value}`}
-                      className="text-base flex-grow cursor-pointer"
+                      className="text-base flex-grow cursor-pointer text-gray-700"
                     >
                       {option.label}
                     </label>
