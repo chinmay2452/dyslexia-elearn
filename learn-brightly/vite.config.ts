@@ -13,7 +13,22 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      crypto: 'crypto-browserify'
+      crypto: 'crypto-browserify',
+      stream: 'stream-browserify',
+      util: 'util',
+      buffer: 'buffer',
+      process: 'process/browser'
+    }
+  },
+  define: {
+    'process.env': {},
+    global: 'globalThis'
+  },
+  optimizeDeps: {
+    esbuildOptions: {
+      define: {
+        global: 'globalThis'
+      }
     }
   },
   server: {
