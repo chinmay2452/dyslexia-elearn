@@ -1,4 +1,3 @@
-
 import React, { useState } from 'react';
 import { Button } from "../components/button";
 import { RadioGroup, RadioGroupItem } from "../components/radio-group";
@@ -8,6 +7,7 @@ import DyslexiaHeader from '../components/DyslexiaHeader';
 import ReadingText from '../components/ReadingText';
 import { Alert, AlertDescription, AlertTitle } from "../components/alert";
 import TestResults from '../components/TestResults';
+import { Route, Routes } from 'react-router-dom';
 
 const questions = [
   {

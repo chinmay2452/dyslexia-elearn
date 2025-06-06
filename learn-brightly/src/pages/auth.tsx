@@ -5,12 +5,6 @@ import { Button } from "../components/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/tabs";
 import { useNavigate } from "react-router-dom";
 import logo from "../assets/learn-bright-logo.svg";
-// import { auth } from "../lib/firebase";
-// import {
-//   createUserWithEmailAndPassword,
-//   signInWithEmailAndPassword,
-//   updateProfile,
-// } from "firebase/auth";
 
 const AuthPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,31 +14,74 @@ const AuthPage: React.FC = () => {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
 
-  // Login form state
-  const [loginData, setLoginData] = useState({
-    email: "",
-    password: "",
-  });
+  const [loginData, setLoginData] = useState({ email: "", password: "" });
 
-  // Signup form state
   const [signupData, setSignupData] = useState({
     fullName: "",
-    age: "",
-    guardianName: "",
     email: "",
     password: "",
+    age: "",
+    guardianName: ""
   });
 
-  // Remove handleLogin and handleSignup functions or replace with alternative logic
+  const handleSignup = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          username: signupData.fullName,
+          email: signupData.email,
+          password: signupData.password,
+          role: "student",
+          age: signupData.age,
+          guardianName: signupData.guardianName
+        })
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Signup failed");
+
+      navigate("/dyslexia-test");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError("");
+
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(loginData)
+      });
+
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || "Login failed");
+
+      localStorage.setItem("token", data.token);
+      navigate("/dyslexia-test");
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-[#FFF9F2] flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md mb-8">
-        <img
-          src={logo}
-          alt="Learn Bright - Dyslexia is a different kind of brilliance"
-          className="w-full max-w-[300px] mx-auto"
-        />
+        <img src={logo} alt="Learn Bright Logo" className="w-full max-w-[300px] mx-auto" />
       </div>
 
       {error && (
@@ -55,187 +92,38 @@ const AuthPage: React.FC = () => {
 
       <Tabs value={tab} onValueChange={setTab} className="w-full max-w-md">
         <TabsList className="grid w-full grid-cols-2 rounded-xl bg-[#ECECEC]">
-          <TabsTrigger
-            value="login"
-            className="rounded-xl data-[state=active]:bg-[#A38BFE] data-[state=active]:text-white"
-          >
-            Login
-          </TabsTrigger>
-          <TabsTrigger
-            value="signup"
-            className="rounded-xl data-[state=active]:bg-[#A38BFE] data-[state=active]:text-white"
-          >
-            Sign Up
-          </TabsTrigger>
+          <TabsTrigger value="login" className="rounded-xl data-[state=active]:bg-[#A38BFE] data-[state=active]:text-white">Login</TabsTrigger>
+          <TabsTrigger value="signup" className="rounded-xl data-[state=active]:bg-[#A38BFE] data-[state=active]:text-white">Sign Up</TabsTrigger>
         </TabsList>
 
-        {/* LOGIN PAGE */}
+        {/* LOGIN */}
         <TabsContent value="login">
           <Card className="mt-4 shadow-md bg-[#FFF1EB]">
             <CardContent className="p-6 space-y-4">
-              <form>
-                <h2 className="text-xl font-semibold text-[#444]">
-                  Welcome Back!
-                </h2>
-                <div className="space-y-2">
-                  <Input
-                    id="login-email"
-                    type="email"
-                    value={loginData.email}
-                    onChange={(e) =>
-                      setLoginData({ ...loginData, email: e.target.value })
-                    }
-                    placeholder="XYZ@email.com"
-                    className="rounded-xl text-black"
-                    required
-                  />
-                </div>
+              <form onSubmit={handleLogin}>
+                <h2 className="text-xl font-semibold text-[#444]">Welcome Back!</h2>
                 <br />
-                <div className="space-y-2">
-                  <div className="relative">
-                    <Input
-                      id="login-password"
-                      type={showLoginPassword ? "text" : "password"}
-                      value={loginData.password}
-                      onChange={(e) =>
-                        setLoginData({ ...loginData, password: e.target.value })
-                      }
-                      placeholder="password"
-                      className="rounded-xl text-black pr-10"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowLoginPassword(!showLoginPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    >
-                      {showLoginPassword ? (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                          <path
-                            fillRule="evenodd"
-                            d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      ) : (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <Button type="submit" className="w-full mt-4">
-                  Login
-                </Button>
+                <Input type="email" value={loginData.email} onChange={(e) => setLoginData({ ...loginData, email: e.target.value })} placeholder="Email" className="rounded-xl text-black" required />
+                <br />
+                <Input type={showLoginPassword ? "text" : "password"} value={loginData.password} onChange={(e) => setLoginData({ ...loginData, password: e.target.value })} placeholder="Password" className="rounded-xl text-black" required />
+                <Button type="submit" className="w-full mt-4" disabled={isLoading}>{isLoading ? "Logging in..." : "Login"}</Button>
               </form>
             </CardContent>
           </Card>
         </TabsContent>
 
-        {/* SIGNUP PAGE */}
+        {/* SIGNUP */}
         <TabsContent value="signup">
           <Card className="mt-4 shadow-md bg-[#FFF1EB]">
             <CardContent className="p-6 space-y-4">
-              <form>
-                <h2 className="text-xl font-semibold text-[#444]">
-                  Create an Account
-                </h2>
-                <div className="space-y-2">
-                  <Input
-                    id="signup-fullname"
-                    type="text"
-                    value={signupData.fullName}
-                    onChange={(e) =>
-                      setSignupData({ ...signupData, fullName: e.target.value })
-                    }
-                    placeholder="Full Name"
-                    className="rounded-xl text-black"
-                    required
-                  />
-                </div>
-                <br />
-                <div className="space-y-2">
-                  <Input
-                    id="signup-email"
-                    type="email"
-                    value={signupData.email}
-                    onChange={(e) =>
-                      setSignupData({ ...signupData, email: e.target.value })
-                    }
-                    placeholder="XYZ@email.com"
-                    className="rounded-xl text-black"
-                    required
-                  />
-                </div>
-                <br />
-                <div className="space-y-2">
-                  <div className="relative">
-                    <Input
-                      id="signup-password"
-                      type={showSignupPassword ? "text" : "password"}
-                      value={signupData.password}
-                      onChange={(e) =>
-                        setSignupData({ ...signupData, password: e.target.value })
-                      }
-                      placeholder="password"
-                      className="rounded-xl text-black pr-10"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowSignupPassword(!showSignupPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                    >
-                      {showSignupPassword ? (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                          <path
-                            fillRule="evenodd"
-                            d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      ) : (
-                        <svg
-                          xmlns="http://www.w3.org/2000/svg"
-                          className="h-5 w-5"
-                          viewBox="0 0 20 20"
-                          fill="currentColor"
-                        >
-                          <path
-                            fillRule="evenodd"
-                            d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z"
-                            clipRule="evenodd"
-                          />
-                        </svg>
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <Button type="submit" className="w-full mt-4">
-                  Sign Up
-                </Button>
+              <form onSubmit={handleSignup}>
+                <h2 className="text-xl font-semibold text-[#444]">Create an Account</h2> <br />
+                <Input type="text" value={signupData.fullName} onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })} placeholder="Full Name" className="rounded-xl text-black" required /> <br />
+                <Input type="email" value={signupData.email} onChange={(e) => setSignupData({ ...signupData, email: e.target.value })} placeholder="Email" className="rounded-xl text-black" required /> <br />
+                <Input type="text" value={signupData.age} onChange={(e) => setSignupData({ ...signupData, age: e.target.value })} placeholder="Age" className="rounded-xl text-black" required /> <br />
+                <Input type="text" value={signupData.guardianName} onChange={(e) => setSignupData({ ...signupData, guardianName: e.target.value })} placeholder="Guardian Name" className="rounded-xl text-black" required /> <br />
+                <Input type={showSignupPassword ? "text" : "password"} value={signupData.password} onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} placeholder="Password" className="rounded-xl text-black" required />
+                <Button type="submit" className="w-full mt-4" disabled={isLoading}>{isLoading ? "Signing up..." : "Sign Up"}</Button>
               </form>
             </CardContent>
           </Card>

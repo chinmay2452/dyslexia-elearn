@@ -17,7 +17,10 @@ export default defineConfig({
       stream: 'stream-browserify',
       util: 'util',
       buffer: 'buffer',
-      process: 'process/browser'
+      process: 'process/browser',
+      path: 'path-browserify',
+      fs: 'browserify-fs',
+      os: 'os-browserify/browser'
     }
   },
   define: {
@@ -28,6 +31,16 @@ export default defineConfig({
     esbuildOptions: {
       define: {
         global: 'globalThis'
+      }
+    }
+  },
+  build: {
+    rollupOptions: {
+      external: ['crypto'],
+      output: {
+        globals: {
+          crypto: 'crypto'
+        }
       }
     }
   },

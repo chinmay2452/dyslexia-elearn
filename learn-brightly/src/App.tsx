@@ -11,7 +11,7 @@ function App() {
       <ToastProvider>
         <Routes>
           <Route path="/" element={<AuthPage />} />
-          <Route path="/test" element={<DyslexiaTest />} />
+          <Route path="/dyslexia-test" element={<DyslexiaTest />} />
         </Routes>
         <ToastViewport />
       </ToastProvider>
