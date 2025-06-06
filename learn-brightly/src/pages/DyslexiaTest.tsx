@@ -1,6 +1,5 @@
 
 import React, { useState } from 'react';
-import {saveQuizResult} from '../models/saveresult'
 import { Button } from "../components/button";
 import { RadioGroup, RadioGroupItem } from "../components/radio-group";
 import { useToast } from "../hooks/use-toast";
@@ -9,7 +8,6 @@ import DyslexiaHeader from '../components/DyslexiaHeader';
 import ReadingText from '../components/ReadingText';
 import { Alert, AlertDescription, AlertTitle } from "../components/alert";
 import TestResults from '../components/TestResults';
-import {auth} from '../lib/firebase';
 
 const questions = [
   {
@@ -147,8 +145,6 @@ const DyslexiaTest = () => {
     
     setScore(percentageScore);
     setTestCompleted(true);
-    const userId = auth.currentUser?.uid || 'anonymous';
-  saveQuizResult(percentageScore, userId);
   };
 
   return (
