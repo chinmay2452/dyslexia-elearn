@@ -1,3 +1,5 @@
+@import url('https://fonts.cdnfonts.com/css/opendyslexic');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
@@ -35,6 +37,8 @@ body {
   place-items: center;
   min-width: 320px;
   min-height: 100vh;
+  font-size: calc(1rem * var(--font-size-multiplier));
+  line-height: calc(1.5 * var(--line-spacing-multiplier));
 }
 
 h1 {
@@ -72,4 +76,44 @@ button:focus-visible {
   button {
     background-color: #f9f9f9;
   }
+}
+
+/* Text Style Settings */
+:root {
+  --font-size-multiplier: 1;
+  --line-spacing-multiplier: 1;
+}
+
+/* Dyslexic font */
+.use-dyslexic-font {
+  font-family: 'OpenDyslexic', system-ui, sans-serif;
+}
+
+/* High contrast mode */
+.high-contrast {
+  background-color: black !important;
+  color: white !important;
+}
+
+.high-contrast * {
+  background-color: black !important;
+  color: white !important;
+  border-color: white !important;
+}
+
+/* Pastel background colors */
+.bg-pastel-yellow {
+  background-color: #fff9c4 !important;
+}
+
+.bg-pastel-blue {
+  background-color: #e3f2fd !important;
+}
+
+.bg-pastel-green {
+  background-color: #e8f5e9 !important;
+}
+
+.bg-pastel-peach {
+  background-color: #ffe0b2 !important;
 }

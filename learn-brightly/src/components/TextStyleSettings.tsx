@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { 
   Sheet, 
@@ -32,9 +31,12 @@ const TextStyleSettings = () => {
   });
 
   useEffect(() => {
-    document.documentElement.style.setProperty('--font-size-multiplier', settings.fontSize.toString());
-    document.documentElement.style.setProperty('--line-spacing-multiplier', settings.lineSpacing.toString());
+    // Apply styles to root element for global effect
+    const root = document.documentElement;
+    root.style.setProperty('--font-size-multiplier', settings.fontSize.toString());
+    root.style.setProperty('--line-spacing-multiplier', settings.lineSpacing.toString());
     
+    // Apply font and contrast settings to body
     if (settings.useDyslexicFont) {
       document.body.classList.add('use-dyslexic-font');
     } else {
@@ -47,6 +49,7 @@ const TextStyleSettings = () => {
       document.body.classList.remove('high-contrast');
     }
     
+    // Handle background color
     document.body.className = document.body.className
       .replace(/bg-pastel-\w+/g, '')
       .trim();
@@ -54,7 +57,18 @@ const TextStyleSettings = () => {
     if (settings.backgroundColor !== 'default') {
       document.body.classList.add(`bg-pastel-${settings.backgroundColor}`);
     }
+
+    // Save settings to localStorage for persistence
+    localStorage.setItem('textStyleSettings', JSON.stringify(settings));
   }, [settings]);
+
+  // Load saved settings on component mount
+  useEffect(() => {
+    const savedSettings = localStorage.getItem('textStyleSettings');
+    if (savedSettings) {
+      setSettings(JSON.parse(savedSettings));
+    }
+  }, []);
 
   const backgroundOptions = [
     { value: 'default', label: 'Default' },
