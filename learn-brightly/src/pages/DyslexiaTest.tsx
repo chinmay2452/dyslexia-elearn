@@ -206,7 +206,7 @@ const DyslexiaTest = () => {
               </button>
               
               <Button 
-                onClick={handleNext}
+                onClick={handleNext}  
                 className="flex items-center gap-2"
               >
                 {currentQuestionIndex < totalQuestions - 1 ? (

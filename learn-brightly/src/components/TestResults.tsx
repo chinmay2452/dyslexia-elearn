@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Button } from "../components/button";
 import { Link } from "react-router-dom";
@@ -94,7 +93,7 @@ const TestResults: React.FC<TestResultsProps> = ({ score }) => {
             </Button>
           </Link>
           
-          <Link to="/" className="block">
+          <Link to="/dashboard" className="block">
             <Button className="w-full h-auto py-4 flex flex-col items-center gap-2 bg-primary hover:bg-primary/90">
               <Home className="h-5 w-5" />
               <span>Return to Home</span>
