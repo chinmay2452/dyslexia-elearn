@@ -46,6 +46,7 @@ const AuthPage: React.FC = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Signup failed");
 
+      localStorage.setItem("token", data.token);
       navigate("/dyslexia-test");
     } catch (err: any) {
       setError(err.message);
@@ -69,10 +70,33 @@ const AuthPage: React.FC = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
 
+      // Store token and user data
       localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      // Check if user has already taken the test
+      const scoreRes = await fetch("http://localhost:5000/api/auth/dyslexia-score", {
+        headers: {
+          'Authorization': `Bearer ${data.token}`
+        }
+      });
+
+      if (scoreRes.ok) {
+        const scoreData = await scoreRes.json();
+        if (scoreData.score !== null) {
+          // User has already taken the test, redirect to dashboard
+          navigate("/dashboard");
+          return;
+        }
+      }
+
+      // User hasn't taken the test yet, redirect to test
       navigate("/dyslexia-test");
     } catch (err: any) {
       setError(err.message);
+      // Clear any existing token/user data on error
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
     } finally {
       setIsLoading(false);
     }

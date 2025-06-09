@@ -1,6 +1,7 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import { ObjectId } from 'mongodb';
 
 class AuthService {
     constructor(db) {
@@ -53,7 +54,12 @@ class AuthService {
 
         const token = this.generateToken(user);
         return {
-            user: new User(user.username, user.email, user.password, user.role).toJSON(),
+            user: {
+                id: user._id.toString(),
+                username: user.username,
+                email: user.email,
+                role: user.role
+            },
             token
         };
     }
@@ -61,7 +67,7 @@ class AuthService {
     generateToken(user) {
         return jwt.sign(
             {
-                id: user._id,
+                id: user._id.toString(),
                 email: user.email,
                 role: user.role
             },
@@ -71,10 +77,53 @@ class AuthService {
     }
 
     async verifyToken(token) {
-        const decoded = jwt.verify(token, process.env.JWT_SECRET);
-        const user = await this.usersCollection.findOne({ _id: decoded.id });
-        if (!user) throw new Error('User not found');
-        return new User(user.username, user.email, user.password, user.role).toJSON();
+        try {
+            const decoded = jwt.verify(token, process.env.JWT_SECRET);
+            if (!decoded || !decoded.id) {
+                throw new Error('Invalid token format');
+            }
+
+            const user = await this.usersCollection.findOne({ 
+                _id: new ObjectId(decoded.id) 
+            });
+            
+            if (!user) {
+                throw new Error('User not found');
+            }
+
+            return {
+                id: user._id.toString(),
+                username: user.username,
+                email: user.email,
+                role: user.role
+            };
+        } catch (error) {
+            console.error('Token verification error:', error);
+            throw new Error('Invalid token');
+        }
+    }
+
+    async updateDyslexiaScore(userId, score) {
+        const dysquizCollection = this.db.collection('dysquiz_percent');
+        
+        const result = await dysquizCollection.updateOne(
+            { userId: userId },
+            { 
+                $set: { 
+                    score: score,
+                    lastTestDate: new Date()
+                }
+            },
+            { upsert: true } // This will create a new document if it doesn't exist
+        );
+        
+        return { success: true, score };
+    }
+
+    async getDyslexiaScore(userId) {
+        const dysquizCollection = this.db.collection('dysquiz_percent');
+        const result = await dysquizCollection.findOne({ userId: userId });
+        return result || { score: null, lastTestDate: null };
     }
 }
 
