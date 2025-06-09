@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Progress } from "./ui/progress";
 import { CircleCheck } from 'lucide-react';
@@ -13,19 +12,19 @@ const ProgressTracker = () => {
           <AnimatedIcon animation="bounce">
             <CircleCheck className="text-green-600" />
           </AnimatedIcon>
-          <span className="font-bold">7/10 Complete!</span>
+          <span className="font-bold">0/10 Complete!</span>
         </div>
       </div>
       
-      <Progress value={70} className="h-4 bg-white/50" />
+      <Progress value={0} className="h-4 bg-white/50 [&>div]:bg-green-500" />
       
       <div className="mt-4 grid grid-cols-2 gap-4 text-center">
         <div className="bg-white/30 rounded-lg p-3">
-          <div className="text-2xl font-bold">3</div>
+          <div className="text-2xl font-bold">0</div>
           <div className="text-sm">Days Streak</div>
         </div>
         <div className="bg-white/30 rounded-lg p-3">
-          <div className="text-2xl font-bold">12</div>
+          <div className="text-2xl font-bold">0</div>
           <div className="text-sm">Stars Earned</div>
         </div>
       </div>

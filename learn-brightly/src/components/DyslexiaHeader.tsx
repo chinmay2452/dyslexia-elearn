@@ -1,13 +1,31 @@
 import React from 'react';
-import { BookOpen, Settings, Volume2, LogOut } from 'lucide-react';
+import { BookOpen, Settings, Volume2, VolumeX, LogOut } from 'lucide-react';
 import IconButton from './IconButton';
 import TextStyleSettings from './TextStyleSettings';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useToast } from '../hooks/use-toast';
 
 const DyslexiaHeader = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const { toast } = useToast();
+  // Check if user is authenticated
+  const isAuthenticated = () => {
+    const token = localStorage.getItem('token');
+    const user = localStorage.getItem('user');
+    return token && user;
+  };
+
+  // Don't show header on auth page
+  if (location.pathname === '/') {
+    return null;
+  }
+
+  // If not authenticated, redirect to login
+  if (!isAuthenticated()) {
+    navigate('/');
+    return null;
+  }
 
   const handleLogout = () => {
     // Clear local storage
@@ -33,7 +51,10 @@ const DyslexiaHeader = () => {
         </div>
         
         <div className="flex items-center gap-2">
-          <button className="p-2 rounded-full bg-pastel-yellow hover:bg-amber-200 transition-colors">
+          <button 
+            className="p-2 rounded-full bg-pastel-yellow hover:bg-amber-200 transition-colors"
+            title="Read page aloud"
+          >
             <Volume2 className="h-6 w-6" />
           </button>
           <TextStyleSettings />

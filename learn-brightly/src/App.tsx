@@ -5,6 +5,11 @@ import AuthPage from './pages/auth'
 import DyslexiaTest from './pages/DyslexiaTest'
 import { ToastProvider, ToastViewport } from "./components/toast"
 import Dashboard from './pages/Dashboard'
+import Navigation from './components/Navigation'
+import Reading from './pages/Reading'
+import Games from './pages/Games'
+import Profile from './pages/Profile'
+import DyslexiaInfo from './pages/DyslexiaInfo'
 
 function App() {
   return (
@@ -12,10 +17,15 @@ function App() {
       <ToastProvider>
         <Routes>
           <Route path="/" element={<AuthPage />} />
-          <Route path="/dyslexia-test" element={<DyslexiaTest />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/reading" element={<Reading />} />
+          <Route path="/games" element={<Games />} />
+          <Route path="/profile" element={<Profile />} />
+          <Route path="/dyslexia" element={<DyslexiaInfo />} />
+          <Route path="/dyslexia-test" element={<DyslexiaTest />} />
         </Routes>
         <ToastViewport />
+        <Navigation />
       </ToastProvider>
     </Router>
   )

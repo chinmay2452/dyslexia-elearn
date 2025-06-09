@@ -47,6 +47,7 @@ const AuthPage: React.FC = () => {
       if (!res.ok) throw new Error(data.error || "Signup failed");
 
       localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
       navigate("/dyslexia-test");
     } catch (err: any) {
       setError(err.message);

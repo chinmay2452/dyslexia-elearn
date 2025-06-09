@@ -1,9 +1,9 @@
 import React, { useEffect } from 'react';
-import { Button } from "../components/button";
+import { Button } from "./button";
 import { Link, useNavigate } from "react-router-dom";
-import ReadingText from '../components/ReadingText.tsx';
+import ReadingText from './ReadingText';
 import { AlertCircle, BookOpen, Home, Redo, GraduationCap } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from "../components/alert";
+import { Alert, AlertDescription, AlertTitle } from "./alert";
 import { motion } from "framer-motion";
 import { useToast } from "../hooks/use-toast";
 import { jwtDecode } from 'jwt-decode';
@@ -60,7 +60,7 @@ const TestResults: React.FC<TestResultsProps> = ({ score }) => {
           description: "Your dyslexia test results have been saved.",
         });
 
-        // Ensure token is still valid before redirecting
+        // Ensure token is still valid
         const verifyResponse = await fetch('http://localhost:5000/api/auth/verify', {
           headers: {
             'Authorization': `Bearer ${token}`
@@ -73,9 +73,6 @@ const TestResults: React.FC<TestResultsProps> = ({ score }) => {
           navigate('/');
           return;
         }
-
-        // Redirect to dashboard after saving score
-        navigate('/dashboard');
       } catch (error) {
         console.error('Error saving score:', error);
         toast({
@@ -83,7 +80,6 @@ const TestResults: React.FC<TestResultsProps> = ({ score }) => {
           description: "There was a problem saving your test results.",
           variant: "destructive"
         });
-        // Don't clear token on general errors, only on auth errors
       }
     };
 

@@ -35,7 +35,14 @@ class AuthService {
         const token = this.generateToken(newUser);
     
         return {
-            user: newUser.toJSON(),
+            user: {
+                id: newUser._id.toString(),
+                username: newUser.username,
+                email: newUser.email,
+                role: newUser.role,
+                age: newUser.age,
+                guardianName: newUser.guardianName
+            },
             token
         };
     }
@@ -58,7 +65,9 @@ class AuthService {
                 id: user._id.toString(),
                 username: user.username,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                age: user.age,
+                guardianName: user.guardianName
             },
             token
         };
@@ -95,7 +104,9 @@ class AuthService {
                 id: user._id.toString(),
                 username: user.username,
                 email: user.email,
-                role: user.role
+                role: user.role,
+                age: user.age,
+                guardianName: user.guardianName
             };
         } catch (error) {
             console.error('Token verification error:', error);
