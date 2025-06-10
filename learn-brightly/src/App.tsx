@@ -12,6 +12,8 @@ import Profile from './pages/Profile'
 import DyslexiaInfo from './pages/DyslexiaInfo'
 import WordMatch from './pages/WordMatch'
 import SpellingHero from './pages/SpellingHero'
+import StoryBuilder from './pages/StoryBuilder'
+import WordBubbles from './pages/WordBubbles'
 
 function App() {
   return (
@@ -24,6 +26,8 @@ function App() {
           <Route path="/games" element={<Games />} />
           <Route path="/games/word-match" element={<WordMatch />} />
           <Route path="/games/spelling-hero" element={<SpellingHero />} />
+          <Route path="/games/story-builder" element={<StoryBuilder />} />
+          <Route path="/games/word-bubbles" element={<WordBubbles />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/dyslexia" element={<DyslexiaInfo />} />
           <Route path="/dyslexia-test" element={<DyslexiaTest />} />
