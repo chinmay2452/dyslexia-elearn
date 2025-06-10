@@ -116,15 +116,15 @@ const Reading = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Button 
-                variant="outline" 
-                size="default" 
+            <Button 
+              variant="outline" 
+              size="default" 
                 className={`flex items-center gap-2 bg-white/70 hover:bg-white ${isReading ? 'bg-pastel-green/60' : ''}`}
                 onClick={handleReadAloud}
-              >
-                <Volume2 className="h-5 w-5" /> 
+            >
+              <Volume2 className="h-5 w-5" /> 
                 {isReading ? 'Stop' : 'Read Aloud'}
-              </Button>
+            </Button>
             </div>
           </div>
           <div className="bg-white/70 rounded-xl p-6 shadow-inner mb-4">
@@ -138,15 +138,15 @@ const Reading = () => {
                   {part}
                 </span>
                 {idx === 0 && (
-                  <div className="my-6 flex justify-center">
-                    <img 
-                      src="https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=600&q=80" 
-                      alt="Magical forest scene" 
-                      className="rounded-xl shadow-md max-h-64 object-cover"
-                    />
-                  </div>
+            <div className="my-6 flex justify-center">
+              <img 
+                src="https://images.unsplash.com/photo-1513836279014-a89f7a76ae86?auto=format&fit=crop&w=600&q=80" 
+                alt="Magical forest scene" 
+                className="rounded-xl shadow-md max-h-64 object-cover"
+              />
+            </div>
                 )}
-              </ReadingText>
+            </ReadingText>
             ))}
           </div>
           

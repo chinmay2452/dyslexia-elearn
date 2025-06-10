@@ -52,16 +52,32 @@ const TextStyleSettings = () => {
     
     // Apply high contrast mode
     if (settings.useHighContrast) {
-      root.style.setProperty('--text-color', '#000000');
-      root.style.setProperty('--background-color', '#FFFFFF');
-      root.style.setProperty('--link-color', '#0000EE');
-      root.style.setProperty('--visited-color', '#551A8B');
+      root.style.setProperty('--text-color', '#FFFFFF');
+      root.style.setProperty('--background-color', '#000000');
+      root.style.setProperty('--link-color', '#00FFFF');
+      root.style.setProperty('--visited-color', '#FF00FF');
+      root.style.setProperty('--border-color', '#FFFFFF');
+      root.style.setProperty('--button-bg', '#000000');
+      root.style.setProperty('--button-text', '#FFFFFF');
+      root.style.setProperty('--button-border', '#FFFFFF');
+      root.style.setProperty('--card-bg', '#000000');
+      root.style.setProperty('--header-bg', '#000000');
+      root.style.setProperty('--gradient-start', '#000000');
+      root.style.setProperty('--gradient-end', '#000000');
       document.body.classList.add('high-contrast');
     } else {
       root.style.setProperty('--text-color', '');
       root.style.setProperty('--background-color', '');
       root.style.setProperty('--link-color', '');
       root.style.setProperty('--visited-color', '');
+      root.style.setProperty('--border-color', '');
+      root.style.setProperty('--button-bg', '');
+      root.style.setProperty('--button-text', '');
+      root.style.setProperty('--button-border', '');
+      root.style.setProperty('--card-bg', '');
+      root.style.setProperty('--header-bg', '');
+      root.style.setProperty('--gradient-start', '');
+      root.style.setProperty('--gradient-end', '');
       document.body.classList.remove('high-contrast');
     }
 
@@ -71,23 +87,28 @@ const TextStyleSettings = () => {
     styleElement.textContent = `
       :root {
         font-size: calc(16px * var(--font-size-multiplier, 1));
-        color: #000000;
       }
       
       * {
         font-family: var(--font-family, inherit) !important;
         letter-spacing: var(--letter-spacing, normal) !important;
         line-height: calc(1.5 * var(--line-spacing-multiplier, 1)) !important;
-        color: #000000 !important;
+      }
+      
+      .high-contrast {
+        background-color: var(--background-color) !important;
+        color: var(--text-color) !important;
       }
       
       .high-contrast * {
-        color: var(--text-color) !important;
         background-color: var(--background-color) !important;
+        color: var(--text-color) !important;
+        border-color: var(--border-color) !important;
       }
       
       .high-contrast a {
         color: var(--link-color) !important;
+        text-decoration: underline !important;
       }
       
       .high-contrast a:visited {
@@ -98,7 +119,82 @@ const TextStyleSettings = () => {
       .high-contrast input,
       .high-contrast select,
       .high-contrast textarea {
-        border: 2px solid var(--text-color) !important;
+        background-color: var(--button-bg) !important;
+        color: var(--button-text) !important;
+        border: 2px solid var(--button-border) !important;
+      }
+
+      .high-contrast .bg-pastel-blue,
+      .high-contrast .bg-pastel-yellow,
+      .high-contrast .bg-pastel-purple,
+      .high-contrast .bg-pastel-peach,
+      .high-contrast .bg-pastel-green,
+      .high-contrast .bg-white,
+      .high-contrast .bg-gray-100,
+      .high-contrast .bg-gray-200,
+      .high-contrast .bg-gray-300,
+      .high-contrast .bg-gray-400,
+      .high-contrast .bg-gray-500,
+      .high-contrast .bg-gray-600,
+      .high-contrast .bg-gray-700,
+      .high-contrast .bg-gray-800,
+      .high-contrast .bg-gray-900 {
+        background-color: var(--background-color) !important;
+        color: var(--text-color) !important;
+        border: 2px solid var(--border-color) !important;
+      }
+
+      .high-contrast .text-primary,
+      .high-contrast .text-amber-500,
+      .high-contrast .text-yellow-500,
+      .high-contrast .text-gray-500,
+      .high-contrast .text-gray-600,
+      .high-contrast .text-gray-700,
+      .high-contrast .text-gray-800,
+      .high-contrast .text-gray-900 {
+        color: var(--text-color) !important;
+      }
+
+      .high-contrast .bg-gradient-to-b,
+      .high-contrast .bg-gradient-to-r,
+      .high-contrast .bg-gradient-to-l,
+      .high-contrast .bg-gradient-to-t {
+        background: var(--background-color) !important;
+      }
+
+      .high-contrast .from-background,
+      .high-contrast .to-background,
+      .high-contrast .from-pastel-blue,
+      .high-contrast .to-pastel-blue,
+      .high-contrast .from-pastel-yellow,
+      .high-contrast .to-pastel-yellow,
+      .high-contrast .from-pastel-purple,
+      .high-contrast .to-pastel-purple,
+      .high-contrast .from-pastel-peach,
+      .high-contrast .to-pastel-peach,
+      .high-contrast .from-pastel-green,
+      .high-contrast .to-pastel-green {
+        background: var(--background-color) !important;
+      }
+
+      .high-contrast .shadow-md,
+      .high-contrast .shadow-lg {
+        box-shadow: 0 0 0 2px var(--border-color) !important;
+      }
+
+      .high-contrast .hover\\:bg-pastel-blue\\/20:hover,
+      .high-contrast .hover\\:bg-pastel-yellow\\/20:hover,
+      .high-contrast .hover\\:bg-pastel-purple\\/20:hover,
+      .high-contrast .hover\\:bg-pastel-peach\\/20:hover,
+      .high-contrast .hover\\:bg-pastel-green\\/20:hover {
+        background-color: var(--background-color) !important;
+        border: 2px solid var(--border-color) !important;
+      }
+
+      .high-contrast .bg-white\\/50,
+      .high-contrast .bg-white\\/70 {
+        background-color: var(--background-color) !important;
+        border: 2px solid var(--border-color) !important;
       }
     `;
     
