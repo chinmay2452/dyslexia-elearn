@@ -1,19 +1,20 @@
-
 import React from 'react';
 import DyslexiaHeader from '../components/DyslexiaHeader';
 import { Puzzle, Star, Trophy, Clock, Zap, Lightbulb } from 'lucide-react';
 import AnimatedIcon from '../components/AnimatedIcon';
 import ReadingText from '../components/ReadingText';
 import LearningCard from '../components/LearningCard';
+import { Link } from 'react-router-dom';
 
 const gameOptions = [
   {
     title: "Word Match",
     icon: <Puzzle />,
     color: "pink",
-    description: "Match words with their pictures. Beat the timer to earn extra points!",
+    description: "Match words with their pictures. Beat the timer to earn extra points! Perfect for building vocabulary and visual recognition skills.",
     level: "Easy",
-    time: "5 min"
+    time: "5 min",
+    path: "/games/word-match"
   },
   {
     title: "Spelling Hero",
@@ -21,7 +22,8 @@ const gameOptions = [
     color: "yellow",
     description: "Listen to words and spell them correctly. Use hints if you need help!",
     level: "Medium",
-    time: "10 min"
+    time: "10 min",
+    path: "/games/spelling-hero"
   },
   {
     title: "Story Builder",
@@ -29,7 +31,8 @@ const gameOptions = [
     color: "blue",
     description: "Create a fun story by choosing the right words to fill in the blanks.",
     level: "Medium",
-    time: "15 min"
+    time: "15 min",
+    path: "/games/story-builder"
   },
   {
     title: "Word Bubbles",
@@ -37,7 +40,8 @@ const gameOptions = [
     color: "green",
     description: "Pop word bubbles that match the category before they float away!",
     level: "Hard",
-    time: "8 min"
+    time: "8 min",
+    path: "/games/word-bubbles"
   },
 ];
 
@@ -98,9 +102,11 @@ const Games = () => {
                   <Clock className="h-4 w-4 mr-1" /> {game.time}
                 </div>
               </div>
-              <button className="w-full mt-2 bg-white/50 hover:bg-white/70 transition-colors rounded-xl py-2 font-bold">
-                Play Now
-              </button>
+              <Link to={game.path}>
+                <button className="w-full mt-2 bg-white/50 hover:bg-white/70 transition-colors rounded-xl py-2 font-bold">
+                  Play Now
+                </button>
+              </Link>
             </LearningCard>
           ))}
         </div>
