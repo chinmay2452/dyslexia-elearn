@@ -11,6 +11,7 @@ import Games from './pages/Games'
 import Profile from './pages/Profile'
 import DyslexiaInfo from './pages/DyslexiaInfo'
 import WordMatch from './pages/WordMatch'
+import SpellingHero from './pages/SpellingHero'
 
 function App() {
   return (
@@ -22,6 +23,7 @@ function App() {
           <Route path="/reading" element={<Reading />} />
           <Route path="/games" element={<Games />} />
           <Route path="/games/word-match" element={<WordMatch />} />
+          <Route path="/games/spelling-hero" element={<SpellingHero />} />
           <Route path="/profile" element={<Profile />} />
           <Route path="/dyslexia" element={<DyslexiaInfo />} />
           <Route path="/dyslexia-test" element={<DyslexiaTest />} />
