@@ -31,17 +31,13 @@ const TestResults: React.FC<TestResultsProps> = ({ score }) => {
           return;
         }
 
-        // Decode the token to get user ID
-        const decoded = jwtDecode<DecodedToken>(token);
-        const userId = decoded.id;
-
         const response = await fetch('http://localhost:5000/api/auth/update-dyslexia-score', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`
           },
-          body: JSON.stringify({ userId, score })
+          body: JSON.stringify({ score })
         });
 
         if (!response.ok) {

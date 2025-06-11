@@ -98,7 +98,7 @@ router.post('/update-dyslexia-score', initAuthService, async (req, res) => {
             return res.status(400).json({ error: 'Missing score' });
         }
 
-        const result = await authService.updateDyslexiaScore(user._id, score);
+        const result = await authService.updateDyslexiaScore(user.id, score);
         res.json(result);
     } catch (error) {
         console.error('Update dyslexia score error:', error.message);
@@ -115,7 +115,7 @@ router.get('/dyslexia-score', initAuthService, async (req, res) => {
         }
 
         const user = await authService.verifyToken(token);
-        const result = await authService.getDyslexiaScore(user._id);
+        const result = await authService.getDyslexiaScore(user.id);
         res.json(result);
     } catch (error) {
         console.error('Get dyslexia score error:', error.message);
