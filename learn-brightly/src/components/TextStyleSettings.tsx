@@ -18,7 +18,6 @@ interface TextStyleSettings {
   fontSize: number;
   lineSpacing: number;
   useDyslexicFont: boolean;
-  useHighContrast: boolean;
   letterSpacing: number;
 }
 
@@ -26,7 +25,6 @@ const defaultSettings: TextStyleSettings = {
   fontSize: 1,
   lineSpacing: 1.5,
   useDyslexicFont: true,
-  useHighContrast: false,
   letterSpacing: 0
 };
 
@@ -49,37 +47,6 @@ const TextStyleSettings = () => {
     } else {
       root.style.setProperty('--font-family', 'system-ui, sans-serif');
     }
-    
-    // Apply high contrast mode
-    if (settings.useHighContrast) {
-      root.style.setProperty('--text-color', '#FFFFFF');
-      root.style.setProperty('--background-color', '#000000');
-      root.style.setProperty('--link-color', '#00FFFF');
-      root.style.setProperty('--visited-color', '#FF00FF');
-      root.style.setProperty('--border-color', '#FFFFFF');
-      root.style.setProperty('--button-bg', '#000000');
-      root.style.setProperty('--button-text', '#FFFFFF');
-      root.style.setProperty('--button-border', '#FFFFFF');
-      root.style.setProperty('--card-bg', '#000000');
-      root.style.setProperty('--header-bg', '#000000');
-      root.style.setProperty('--gradient-start', '#000000');
-      root.style.setProperty('--gradient-end', '#000000');
-      document.body.classList.add('high-contrast');
-    } else {
-      root.style.setProperty('--text-color', '');
-      root.style.setProperty('--background-color', '');
-      root.style.setProperty('--link-color', '');
-      root.style.setProperty('--visited-color', '');
-      root.style.setProperty('--border-color', '');
-      root.style.setProperty('--button-bg', '');
-      root.style.setProperty('--button-text', '');
-      root.style.setProperty('--button-border', '');
-      root.style.setProperty('--card-bg', '');
-      root.style.setProperty('--header-bg', '');
-      root.style.setProperty('--gradient-start', '');
-      root.style.setProperty('--gradient-end', '');
-      document.body.classList.remove('high-contrast');
-    }
 
     // Add global styles
     const styleElement = document.getElementById('global-text-styles') || document.createElement('style');
@@ -93,108 +60,6 @@ const TextStyleSettings = () => {
         font-family: var(--font-family, inherit) !important;
         letter-spacing: var(--letter-spacing, normal) !important;
         line-height: calc(1.5 * var(--line-spacing-multiplier, 1)) !important;
-      }
-      
-      .high-contrast {
-        background-color: var(--background-color) !important;
-        color: var(--text-color) !important;
-      }
-      
-      .high-contrast * {
-        background-color: var(--background-color) !important;
-        color: var(--text-color) !important;
-        border-color: var(--border-color) !important;
-      }
-      
-      .high-contrast a {
-        color: var(--link-color) !important;
-        text-decoration: underline !important;
-      }
-      
-      .high-contrast a:visited {
-        color: var(--visited-color) !important;
-      }
-      
-      .high-contrast button,
-      .high-contrast input,
-      .high-contrast select,
-      .high-contrast textarea {
-        background-color: var(--button-bg) !important;
-        color: var(--button-text) !important;
-        border: 2px solid var(--button-border) !important;
-      }
-
-      .high-contrast .bg-pastel-blue,
-      .high-contrast .bg-pastel-yellow,
-      .high-contrast .bg-pastel-purple,
-      .high-contrast .bg-pastel-peach,
-      .high-contrast .bg-pastel-green,
-      .high-contrast .bg-white,
-      .high-contrast .bg-gray-100,
-      .high-contrast .bg-gray-200,
-      .high-contrast .bg-gray-300,
-      .high-contrast .bg-gray-400,
-      .high-contrast .bg-gray-500,
-      .high-contrast .bg-gray-600,
-      .high-contrast .bg-gray-700,
-      .high-contrast .bg-gray-800,
-      .high-contrast .bg-gray-900 {
-        background-color: var(--background-color) !important;
-        color: var(--text-color) !important;
-        border: 2px solid var(--border-color) !important;
-      }
-
-      .high-contrast .text-primary,
-      .high-contrast .text-amber-500,
-      .high-contrast .text-yellow-500,
-      .high-contrast .text-gray-500,
-      .high-contrast .text-gray-600,
-      .high-contrast .text-gray-700,
-      .high-contrast .text-gray-800,
-      .high-contrast .text-gray-900 {
-        color: var(--text-color) !important;
-      }
-
-      .high-contrast .bg-gradient-to-b,
-      .high-contrast .bg-gradient-to-r,
-      .high-contrast .bg-gradient-to-l,
-      .high-contrast .bg-gradient-to-t {
-        background: var(--background-color) !important;
-      }
-
-      .high-contrast .from-background,
-      .high-contrast .to-background,
-      .high-contrast .from-pastel-blue,
-      .high-contrast .to-pastel-blue,
-      .high-contrast .from-pastel-yellow,
-      .high-contrast .to-pastel-yellow,
-      .high-contrast .from-pastel-purple,
-      .high-contrast .to-pastel-purple,
-      .high-contrast .from-pastel-peach,
-      .high-contrast .to-pastel-peach,
-      .high-contrast .from-pastel-green,
-      .high-contrast .to-pastel-green {
-        background: var(--background-color) !important;
-      }
-
-      .high-contrast .shadow-md,
-      .high-contrast .shadow-lg {
-        box-shadow: 0 0 0 2px var(--border-color) !important;
-      }
-
-      .high-contrast .hover\\:bg-pastel-blue\\/20:hover,
-      .high-contrast .hover\\:bg-pastel-yellow\\/20:hover,
-      .high-contrast .hover\\:bg-pastel-purple\\/20:hover,
-      .high-contrast .hover\\:bg-pastel-peach\\/20:hover,
-      .high-contrast .hover\\:bg-pastel-green\\/20:hover {
-        background-color: var(--background-color) !important;
-        border: 2px solid var(--border-color) !important;
-      }
-
-      .high-contrast .bg-white\\/50,
-      .high-contrast .bg-white\\/70 {
-        background-color: var(--background-color) !important;
-        border: 2px solid var(--border-color) !important;
       }
     `;
     
@@ -308,18 +173,6 @@ const TextStyleSettings = () => {
               id="dyslexic-font"
               checked={settings.useDyslexicFont}
               onCheckedChange={(checked) => setSettings({...settings, useDyslexicFont: checked})}
-            />
-          </div>
-          
-          <div className="flex items-center justify-between space-y-0 py-2">
-            <div className="flex items-center gap-2">
-              <Eye className="h-4 w-4" />
-              <Label htmlFor="high-contrast">High Contrast</Label>
-            </div>
-            <Switch 
-              id="high-contrast"
-              checked={settings.useHighContrast}
-              onCheckedChange={(checked) => setSettings({...settings, useHighContrast: checked})}
             />
           </div>
         </div>

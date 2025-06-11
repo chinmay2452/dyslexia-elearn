@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { BookOpen, Settings, Volume2, VolumeX, LogOut, User, Bell, Moon, Sun, HelpCircle } from 'lucide-react';
 import IconButton from './IconButton';
 import TextStyleSettings from './TextStyleSettings';
@@ -20,9 +20,22 @@ const DyslexiaHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const [isDarkMode, setIsDarkMode] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(() => {
+    const savedMode = localStorage.getItem('darkMode');
+    return savedMode === 'true';
+  });
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
+
+  // Apply dark mode on mount and when it changes
+  useEffect(() => {
+    if (isDarkMode) {
+      document.documentElement.classList.add('dark');
+    } else {
+      document.documentElement.classList.remove('dark');
+    }
+    localStorage.setItem('darkMode', isDarkMode.toString());
+  }, [isDarkMode]);
 
   // Check if user is authenticated
   const isAuthenticated = () => {
@@ -59,7 +72,6 @@ const DyslexiaHeader = () => {
 
   const toggleDarkMode = () => {
     setIsDarkMode(!isDarkMode);
-    document.documentElement.classList.toggle('dark');
     toast({
       title: isDarkMode ? "Light mode enabled" : "Dark mode enabled",
       description: `Switched to ${isDarkMode ? 'light' : 'dark'} mode.`,

@@ -167,6 +167,7 @@ const Reading = () => {
                   size="default" 
                   variant="outline"
                   className="hover:bg-white/70"
+                  
                 >
                   <Volume2 className="h-4 w-4" />
                 </Button>
@@ -197,9 +198,9 @@ const Reading = () => {
             <h3 className="font-bold text-lg mb-2">Comprehension</h3>
             <div className="space-y-3">
               <ReadingText>Who is the main character in our story?</ReadingText>
-              <Button className="w-full text-left justify-start bg-white/50 hover:bg-white/70">Mia the astronaut</Button>
-              <Button className="w-full text-left justify-start bg-white/50 hover:bg-white/70">Tom the alien</Button>
-              <Button className="w-full text-left justify-start bg-white/50 hover:bg-white/70">Luna the fox</Button>
+              <Button className="w-full text-left justify-start bg-white/50 hover:bg-white/70 text-black">Mia the astronaut</Button>
+              <Button className="w-full text-left justify-start bg-white/50 hover:bg-white/70 text-black">Tom the alien</Button>
+              <Button className="w-full text-left justify-start bg-white/50 hover:bg-white/70 text-black">Luna the fox</Button>
             </div>
           </div>
           <div className="bg-pastel-purple rounded-xl p-4 shadow-md">
