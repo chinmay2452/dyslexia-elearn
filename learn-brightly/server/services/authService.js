@@ -136,6 +136,84 @@ class AuthService {
         const result = await dysquizCollection.findOne({ userId: userId });
         return result || { score: null, lastTestDate: null };
     }
+
+    async getReadingPreferences(userId) {
+        const user = await this.usersCollection.findOne({ _id: new ObjectId(userId) });
+        if (!user) throw new Error('User not found');
+        return user.readingPreferences || null;
+    }
+
+    async updateReadingPreferences(userId, preferences) {
+        const result = await this.usersCollection.updateOne(
+            { _id: new ObjectId(userId) },
+            { $set: { readingPreferences: preferences } }
+        );
+        return { success: true };
+    }
+
+    async updateAccount(userId, accountData) {
+        const result = await this.usersCollection.updateOne(
+            { _id: new ObjectId(userId) },
+            { 
+                $set: { 
+                    username: accountData.username,
+                    email: accountData.email,
+                    age: accountData.age,
+                    guardianName: accountData.guardianName
+                }
+            }
+        );
+        
+        if (result.modifiedCount === 0) {
+            throw new Error('Failed to update account');
+        }
+
+        const updatedUser = await this.usersCollection.findOne({ _id: new ObjectId(userId) });
+        return {
+            user: {
+                id: updatedUser._id.toString(),
+                username: updatedUser.username,
+                email: updatedUser.email,
+                role: updatedUser.role,
+                age: updatedUser.age,
+                guardianName: updatedUser.guardianName
+            }
+        };
+    }
+
+    async getNotificationSettings(userId) {
+        try {
+            const user = await this.usersCollection.findOne({ _id: new ObjectId(userId) });
+            if (!user) {
+                throw new Error('User not found');
+            }
+            return user.notificationSettings || {
+                emailNotifications: true,
+                achievementAlerts: true,
+                progressUpdates: true,
+                weeklyReports: true,
+                reminderFrequency: 'weekly'
+            };
+        } catch (error) {
+            throw new Error(`Failed to get notification settings: ${error.message}`);
+        }
+    }
+
+    async updateNotificationSettings(userId, settings) {
+        try {
+            const result = await this.usersCollection.updateOne(
+                { _id: new ObjectId(userId) },
+                { $set: { notificationSettings: settings } }
+            );
+            if (result.modifiedCount === 0) {
+                throw new Error('Failed to update notification settings');
+            }
+            const updatedUser = await this.usersCollection.findOne({ _id: new ObjectId(userId) });
+            return updatedUser.notificationSettings;
+        } catch (error) {
+            throw new Error(`Failed to update notification settings: ${error.message}`);
+        }
+    }
 }
 
 export default AuthService;

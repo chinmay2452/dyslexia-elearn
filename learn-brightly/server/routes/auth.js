@@ -123,4 +123,120 @@ router.get('/dyslexia-score', initAuthService, async (req, res) => {
     }
 });
 
+// Get reading preferences
+router.get('/reading-preferences', initAuthService, async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+        const user = await authService.verifyToken(token);
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid user' });
+        }
+        const prefs = await authService.getReadingPreferences(user.id);
+        res.json({ readingPreferences: prefs });
+    } catch (error) {
+        console.error('Get reading preferences error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update reading preferences
+router.post('/reading-preferences', initAuthService, async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+        const user = await authService.verifyToken(token);
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid user' });
+        }
+        const { preferences } = req.body;
+        if (!preferences) {
+            return res.status(400).json({ error: 'Missing preferences' });
+        }
+        await authService.updateReadingPreferences(user.id, preferences);
+        res.json({ success: true });
+    } catch (error) {
+        console.error('Update reading preferences error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update account information
+router.post('/update-account', initAuthService, async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        const user = await authService.verifyToken(token);
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid user' });
+        }
+
+        const { username, email, age, guardianName } = req.body;
+        if (!username || !email || !age || !guardianName) {
+            return res.status(400).json({ error: 'Missing required fields' });
+        }
+
+        const result = await authService.updateAccount(user.id, {
+            username,
+            email,
+            age,
+            guardianName
+        });
+        res.json(result);
+    } catch (error) {
+        console.error('Update account error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Get notification settings
+router.get('/notification-settings', initAuthService, async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        const user = await authService.verifyToken(token);
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid user' });
+        }
+
+        const settings = await authService.getNotificationSettings(user.id);
+        res.json(settings);
+    } catch (error) {
+        console.error('Get notification settings error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
+// Update notification settings
+router.post('/update-notification-settings', initAuthService, async (req, res) => {
+    try {
+        const token = req.headers.authorization?.split(' ')[1];
+        if (!token) {
+            return res.status(401).json({ error: 'No token provided' });
+        }
+
+        const user = await authService.verifyToken(token);
+        if (!user) {
+            return res.status(401).json({ error: 'Invalid user' });
+        }
+
+        const settings = req.body;
+        const result = await authService.updateNotificationSettings(user.id, settings);
+        res.json(result);
+    } catch (error) {
+        console.error('Update notification settings error:', error.message);
+        res.status(500).json({ error: error.message });
+    }
+});
+
 export default router;

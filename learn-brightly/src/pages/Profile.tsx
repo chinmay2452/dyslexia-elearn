@@ -1,10 +1,27 @@
 import React, { useEffect, useState } from 'react';
 import DyslexiaHeader from '../components/DyslexiaHeader';
-import { User, Award, BookOpen, Settings, Bell, Puzzle, Calendar } from 'lucide-react';
+import { User, Award, BookOpen, Settings, Bell, Puzzle, Calendar, TextCursor, AlignJustify, Type, Mail, UserCircle, BellOff, BellRing, CheckCircle2, Clock } from 'lucide-react';
 import { Button } from "../components/button";
-import ReadingText from '../components/ReadingText';
-import AnimatedIcon from '../components/AnimatedIcon';
 import { useNavigate } from 'react-router-dom';
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetFooter
+} from "../components/sheet";
+import { Slider } from "../components/slider";
+import { Label } from "../components/label";
+import { Switch } from "../components/switch";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue
+} from "../components/select";
+import { Loader2 } from 'lucide-react';
 
 interface UserData {
   username: string;
@@ -14,9 +31,532 @@ interface UserData {
   role: string;
 }
 
+interface ReadingPreferences {
+  fontSize: number;
+  lineSpacing: number;
+  useDyslexicFont: boolean;
+  letterSpacing: number;
+}
+
+interface AccountSettings {
+  username: string;
+  email: string;
+  age: string;
+  guardianName: string;
+}
+
+interface NotificationSettings {
+  emailNotifications: boolean;
+  achievementAlerts: boolean;
+  progressUpdates: boolean;
+  weeklyReports: boolean;
+  reminderFrequency: 'daily' | 'weekly' | 'none';
+}
+
+const defaultPreferences: ReadingPreferences = {
+  fontSize: 1,
+  lineSpacing: 1.5,
+  useDyslexicFont: true,
+  letterSpacing: 0
+};
+
+const ReadingPreferencesSheet = ({ open, setOpen }: { open: boolean, setOpen: (v: boolean) => void }) => {
+  const [preferences, setPreferences] = useState<ReadingPreferences>(defaultPreferences);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (open) {
+      setLoading(true);
+      setError(null);
+      const token = localStorage.getItem('token');
+      fetch('http://localhost:5000/api/auth/reading-preferences', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.readingPreferences) {
+            setPreferences(data.readingPreferences);
+          } else {
+            setPreferences(defaultPreferences);
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          setError('Failed to load preferences');
+          setLoading(false);
+        });
+    }
+  }, [open]);
+
+  const handleSave = async () => {
+    setSaving(true);
+    setError(null);
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/reading-preferences', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ preferences })
+      });
+      if (!res.ok) throw new Error('Failed to save preferences');
+      setOpen(false);
+    } catch (e) {
+      setError('Failed to save preferences');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const resetPreferences = () => setPreferences(defaultPreferences);
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="text-2xl flex items-center gap-2">
+            <Settings className="h-6 w-6" />
+            Reading Preferences
+          </SheetTitle>
+          <SheetDescription>
+            Adjust text appearance for easier reading
+          </SheetDescription>
+        </SheetHeader>
+        {loading ? (
+          <div className="py-8 text-center">Loading...</div>
+        ) : (
+          <div className="py-6 space-y-6">
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TextCursor className="h-4 w-4" />
+                  <Label htmlFor="font-size">Font Size</Label>
+                </div>
+                <span className="text-sm font-medium">{Math.round(preferences.fontSize * 100)}%</span>
+              </div>
+              <Slider
+                id="font-size"
+                min={0.8}
+                max={1.5}
+                step={0.05}
+                value={[preferences.fontSize]}
+                onValueChange={([value]) => setPreferences({ ...preferences, fontSize: value })}
+                className="py-2"
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <AlignJustify className="h-4 w-4" />
+                  <Label htmlFor="line-spacing">Line Spacing</Label>
+                </div>
+                <span className="text-sm font-medium">{Math.round(preferences.lineSpacing * 100)}%</span>
+              </div>
+              <Slider
+                id="line-spacing"
+                min={1}
+                max={2.5}
+                step={0.1}
+                value={[preferences.lineSpacing]}
+                onValueChange={([value]) => setPreferences({ ...preferences, lineSpacing: value })}
+                className="py-2"
+              />
+            </div>
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TextCursor className="h-4 w-4" />
+                  <Label htmlFor="letter-spacing">Letter Spacing</Label>
+                </div>
+                <span className="text-sm font-medium">{preferences.letterSpacing}px</span>
+              </div>
+              <Slider
+                id="letter-spacing"
+                min={0}
+                max={2}
+                step={0.1}
+                value={[preferences.letterSpacing]}
+                onValueChange={([value]) => setPreferences({ ...preferences, letterSpacing: value })}
+                className="py-2"
+              />
+            </div>
+            <div className="flex items-center justify-between space-y-0 py-2">
+              <div className="flex items-center gap-2">
+                <Type className="h-4 w-4" />
+                <Label htmlFor="dyslexic-font">Use Dyslexia Font</Label>
+              </div>
+              <Switch
+                id="dyslexic-font"
+                checked={preferences.useDyslexicFont}
+                onCheckedChange={(checked) => setPreferences({ ...preferences, useDyslexicFont: checked })}
+              />
+            </div>
+            {error && <div className="text-red-500 text-sm">{error}</div>}
+          </div>
+        )}
+        <SheetFooter>
+          <Button variant="outline" onClick={resetPreferences} disabled={saving}>Reset</Button>
+          <Button onClick={handleSave} disabled={saving || loading} className="ml-2">{saving ? 'Saving...' : 'Save'}</Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  );
+};
+
+const AccountSettingsSheet = ({ open, setOpen, userData, onUpdate }: { 
+  open: boolean, 
+  setOpen: (v: boolean) => void,
+  userData: UserData | null,
+  onUpdate: (data: UserData) => void 
+}) => {
+  const [settings, setSettings] = useState<AccountSettings>({
+    username: userData?.username || '',
+    email: userData?.email || '',
+    age: userData?.age || '',
+    guardianName: userData?.guardianName || ''
+  });
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    if (open && userData) {
+      setSettings({
+        username: userData.username,
+        email: userData.email,
+        age: userData.age,
+        guardianName: userData.guardianName
+      });
+    }
+  }, [open, userData]);
+
+  const handleSave = async () => {
+    setLoading(true);
+    setError(null);
+    setSuccess(false);
+    const token = localStorage.getItem('token');
+    try {
+      const res = await fetch('http://localhost:5000/api/auth/update-account', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(settings)
+      });
+      
+      if (!res.ok) throw new Error('Failed to update account');
+      
+      const data = await res.json();
+      onUpdate(data.user);
+      setSuccess(true);
+      setTimeout(() => setOpen(false), 1500);
+    } catch (e) {
+      setError('Failed to update account settings');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+        <SheetHeader>
+          <SheetTitle className="text-2xl flex items-center gap-2">
+            <UserCircle className="h-6 w-6" />
+            Account Settings
+          </SheetTitle>
+          <SheetDescription>
+            Update your account information
+          </SheetDescription>
+        </SheetHeader>
+        
+        <div className="py-6 space-y-6">
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label htmlFor="username">Username</Label>
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-gray-500" />
+                <input
+                  id="username"
+                  type="text"
+                  value={settings.username}
+                  onChange={(e) => setSettings({ ...settings, username: e.target.value })}
+                  className="flex-1 p-2 rounded-md border"
+                  placeholder="Enter your username"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="email">Email</Label>
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-gray-500" />
+                <input
+                  id="email"
+                  type="email"
+                  value={settings.email}
+                  onChange={(e) => setSettings({ ...settings, email: e.target.value })}
+                  className="flex-1 p-2 rounded-md border"
+                  placeholder="Enter your email"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="age">Age</Label>
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-gray-500" />
+                <input
+                  id="age"
+                  type="text"
+                  value={settings.age}
+                  onChange={(e) => setSettings({ ...settings, age: e.target.value })}
+                  className="flex-1 p-2 rounded-md border"
+                  placeholder="Enter your age"
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="guardian">Guardian Name</Label>
+              <div className="flex items-center gap-2">
+                <User className="h-4 w-4 text-gray-500" />
+                <input
+                  id="guardian"
+                  type="text"
+                  value={settings.guardianName}
+                  onChange={(e) => setSettings({ ...settings, guardianName: e.target.value })}
+                  className="flex-1 p-2 rounded-md border"
+                  placeholder="Enter guardian's name"
+                />
+              </div>
+            </div>
+          </div>
+
+          {error && <div className="text-red-500 text-sm">{error}</div>}
+          {success && <div className="text-green-500 text-sm">Settings updated successfully!</div>}
+        </div>
+
+        <SheetFooter>
+          <Button 
+            variant="outline" 
+            onClick={() => setOpen(false)} 
+            disabled={loading}
+          >
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSave} 
+            disabled={loading} 
+            className="ml-2"
+          >
+            {loading ? 'Saving...' : 'Save Changes'}
+          </Button>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
+  );
+};
+
+function NotificationSettingsSheet({ 
+  open, 
+  onOpenChange 
+}: { 
+  open: boolean; 
+  onOpenChange: (open: boolean) => void;
+}) {
+  const [settings, setSettings] = useState<NotificationSettings>({
+    emailNotifications: true,
+    achievementAlerts: true,
+    progressUpdates: true,
+    weeklyReports: true,
+    reminderFrequency: 'weekly'
+  });
+  const [isLoading, setIsLoading] = useState(false);
+  const [message, setMessage] = useState<{ type: 'success' | 'error'; text: string } | null>(null);
+
+  useEffect(() => {
+    const fetchSettings = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) return;
+
+        const response = await fetch('http://localhost:5000/api/auth/notification-settings', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSettings(data);
+        }
+      } catch (error) {
+        console.error('Error fetching notification settings:', error);
+      }
+    };
+
+    if (open) {
+      fetchSettings();
+    }
+  }, [open]);
+
+  const handleSave = async () => {
+    setIsLoading(true);
+    setMessage(null);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) throw new Error('No token found');
+
+      const response = await fetch('http://localhost:5000/api/auth/update-notification-settings', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(settings)
+      });
+
+      if (!response.ok) {
+        throw new Error('Failed to update settings');
+      }
+
+      setMessage({ type: 'success', text: 'Notification settings updated successfully!' });
+      setTimeout(() => {
+        onOpenChange(false);
+      }, 1500);
+    } catch (error) {
+      setMessage({ type: 'error', text: 'Failed to update settings. Please try again.' });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  return (
+    <Sheet open={open} onOpenChange={onOpenChange}>
+      <SheetContent side="right" className="w-[400px] sm:w-[540px] bg-white">
+        <SheetHeader>
+          <SheetTitle className="text-2xl font-bold text-gray-900">Notification Settings</SheetTitle>
+          <SheetDescription className="text-gray-500">
+            Manage how and when you receive notifications
+          </SheetDescription>
+        </SheetHeader>
+
+        <div className="mt-6 space-y-6">
+          <div className="space-y-4">
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base font-medium">Email Notifications</Label>
+                <p className="text-sm text-gray-500">Receive updates via email</p>
+              </div>
+              <Switch
+                checked={settings.emailNotifications}
+                onCheckedChange={(checked) => setSettings(prev => ({ ...prev, emailNotifications: checked }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base font-medium">Achievement Alerts</Label>
+                <p className="text-sm text-gray-500">Get notified when you earn achievements</p>
+              </div>
+              <Switch
+                checked={settings.achievementAlerts}
+                onCheckedChange={(checked) => setSettings(prev => ({ ...prev, achievementAlerts: checked }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base font-medium">Progress Updates</Label>
+                <p className="text-sm text-gray-500">Receive updates about your learning progress</p>
+              </div>
+              <Switch
+                checked={settings.progressUpdates}
+                onCheckedChange={(checked) => setSettings(prev => ({ ...prev, progressUpdates: checked }))}
+              />
+            </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label className="text-base font-medium">Weekly Reports</Label>
+                <p className="text-sm text-gray-500">Get a summary of your weekly progress</p>
+              </div>
+              <Switch
+                checked={settings.weeklyReports}
+                onCheckedChange={(checked) => setSettings(prev => ({ ...prev, weeklyReports: checked }))}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label className="text-base font-medium">Reminder Frequency</Label>
+              <Select
+                value={settings.reminderFrequency}
+                onValueChange={(value: 'daily' | 'weekly' | 'none') => 
+                  setSettings(prev => ({ ...prev, reminderFrequency: value }))
+                }
+              >
+                <SelectTrigger className="w-full">
+                  <SelectValue placeholder="Select frequency" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Daily</SelectItem>
+                  <SelectItem value="weekly">Weekly</SelectItem>
+                  <SelectItem value="none">None</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          {message && (
+            <div className={`p-3 rounded-lg ${
+              message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+            }`}>
+              {message.text}
+            </div>
+          )}
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <Button
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+              disabled={isLoading}
+            >
+              Cancel
+            </Button>
+            <Button
+              onClick={handleSave}
+              disabled={isLoading}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              {isLoading ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                'Save Changes'
+              )}
+            </Button>
+          </div>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
 const Profile = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const navigate = useNavigate();
+  const [showPreferences, setShowPreferences] = useState(false);
+  const [showAccountSettings, setShowAccountSettings] = useState(false);
+  const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false);
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -47,6 +587,10 @@ const Profile = () => {
 
     fetchUserData();
   }, [navigate]);
+
+  const handleUserUpdate = (updatedUser: UserData) => {
+    setUserData(updatedUser);
+  };
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-pastel-purple/30 pb-24">
@@ -168,25 +712,48 @@ const Profile = () => {
                 <Settings className="mr-3" />
                 <span className="font-bold">Reading Preferences</span>
               </div>
-              <Button variant="outline" size="default">Adjust</Button>
+              <Button variant="outline" size="default" onClick={() => setShowPreferences(true)}>Adjust</Button>
             </div>
             <div className="flex items-center justify-between p-3 bg-gray-100/50 rounded-lg">
-              <div className="flex items-center">
-                <Bell className="mr-3" />
+              <div className="flex items-center space-x-3">
+                <Bell className="h-5 w-5" />
                 <span className="font-bold">Notifications</span>
               </div>
-              <Button variant="outline" size="default">Manage</Button>
+              <Button
+                variant="outline"
+                onClick={() => setNotificationSettingsOpen(true)}
+                className="border-gray-300 bg-white hover:bg-gray-50 text-gray-700 py-2 px-4"
+              >
+                Manage
+              </Button>
             </div>
             <div className="flex items-center justify-between p-3 bg-gray-100/50 rounded-lg">
               <div className="flex items-center">
                 <User className="mr-3" />
                 <span className="font-bold">Account Settings</span>
               </div>
-              <Button variant="outline" size="default">Edit</Button>
+              <Button 
+                variant="outline" 
+                size="default" 
+                onClick={() => setShowAccountSettings(true)}
+              >
+                Edit
+              </Button>
             </div>
           </div>
         </div>
       </main>
+      <ReadingPreferencesSheet open={showPreferences} setOpen={setShowPreferences} />
+      <AccountSettingsSheet 
+        open={showAccountSettings} 
+        setOpen={setShowAccountSettings}
+        userData={userData}
+        onUpdate={handleUserUpdate}
+      />
+      <NotificationSettingsSheet
+        open={notificationSettingsOpen}
+        onOpenChange={setNotificationSettingsOpen}
+      />
     </div>
   );
 };
