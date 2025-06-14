@@ -14,6 +14,7 @@ import WordMatch from './pages/WordMatch'
 import SpellingHero from './pages/SpellingHero'
 import StoryBuilder from './pages/StoryBuilder'
 import WordBubbles from './pages/WordBubbles'
+import HelpSupport from './pages/HelpSupport'
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="/profile" element={<Profile />} />
           <Route path="/dyslexia" element={<DyslexiaInfo />} />
           <Route path="/dyslexia-test" element={<DyslexiaTest />} />
+          <Route path="/help-support" element={<HelpSupport />} />
         </Routes>
         <ToastViewport />
         <Navigation />
