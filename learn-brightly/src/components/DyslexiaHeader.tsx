@@ -162,7 +162,7 @@ const DyslexiaHeader = () => {
                   <Button
                     variant="outline"
                     className="w-full flex items-center justify-between"
-                    onClick={() => navigate('/help')}
+                    onClick={() => navigate('/help-support')}
                   >
                     <div className="flex items-center gap-2">
                       <HelpCircle className="h-5 w-5" />

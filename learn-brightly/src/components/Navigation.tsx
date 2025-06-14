@@ -1,10 +1,11 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, BookOpen, Puzzle, User, Info } from 'lucide-react';
+import { Home, BookOpen, Puzzle, User, Info, HelpCircle } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
+  const [showProfileMenu, setShowProfileMenu] = useState(false);
   
   // Check if user is authenticated and has completed the test
   const isAuthenticated = () => {
@@ -51,10 +52,36 @@ const Navigation = () => {
           <span className="text-xs font-bold mt-1">Dyslexia</span>
         </Link>
         
-        <Link to="/profile" className={`flex flex-col items-center p-2 ${isActive('/profile') ? 'bg-white/30 rounded-xl' : ''}`}>
-          <User className={`h-6 w-6 ${isActive('/profile') ? 'text-primary' : ''}`} />
-          <span className="text-xs font-bold mt-1">Profile</span>
-        </Link>
+        <div className="relative">
+          <button 
+            onClick={() => setShowProfileMenu(!showProfileMenu)}
+            className={`flex flex-col items-center p-2 ${isActive('/profile') || isActive('/help-support') ? 'bg-white/30 rounded-xl' : ''}`}
+          >
+            <User className={`h-6 w-6 ${isActive('/profile') || isActive('/help-support') ? 'text-primary' : ''}`} />
+            <span className="text-xs font-bold mt-1">Profile</span>
+          </button>
+          
+          {showProfileMenu && (
+            <div className="absolute bottom-full mb-2 right-0 bg-white rounded-lg shadow-lg py-2 w-48">
+              <Link 
+                to="/profile" 
+                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                onClick={() => setShowProfileMenu(false)}
+              >
+                <User className="h-4 w-4 mr-2" />
+                Profile
+              </Link>
+              <Link 
+                to="/help-support" 
+                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                onClick={() => setShowProfileMenu(false)}
+              >
+                <HelpCircle className="h-4 w-4 mr-2" />
+                Help & Support
+              </Link>
+            </div>
+          )}
+        </div>
       </div>
     </nav>
   );
