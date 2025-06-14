@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Book, PlayCircle, Puzzle, FileText } from 'lucide-react';
 import AnimatedIcon from '../components/AnimatedIcon';
+import VideoSection from './VideoSection';
 
 const categories = [
   { name: 'Reading', icon: <Book />, color: 'bg-pastel-blue' },
@@ -10,14 +11,23 @@ const categories = [
 ];
 
 const LearningCategories = () => {
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+
+  const handleCategoryClick = (categoryName: string) => {
+    setSelectedCategory(categoryName === selectedCategory ? null : categoryName);
+  };
+
   return (
     <div className="py-6">
       <h2 className="text-2xl font-bold mb-4">Learning Activities</h2>
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
         {categories.map((category) => (
           <button 
             key={category.name}
-            className={`${category.color} rounded-xl p-6 flex flex-col items-center gap-3 shadow hover:shadow-md transition-all hover:scale-105 animate-pop`}
+            onClick={() => handleCategoryClick(category.name)}
+            className={`${category.color} rounded-xl p-6 flex flex-col items-center gap-3 shadow hover:shadow-md transition-all hover:scale-105 animate-pop ${
+              selectedCategory === category.name ? 'ring-4 ring-primary/30' : ''
+            }`}
           >
             <AnimatedIcon animation="bounce" size="lg">
               {category.icon}
@@ -26,6 +36,8 @@ const LearningCategories = () => {
           </button>
         ))}
       </div>
+
+      {selectedCategory === 'Videos' && <VideoSection />}
     </div>
   );
 };
