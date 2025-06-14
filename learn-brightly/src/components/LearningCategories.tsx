@@ -1,20 +1,20 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Book, PlayCircle, Puzzle, FileText } from 'lucide-react';
 import AnimatedIcon from '../components/AnimatedIcon';
-import VideoSection from './VideoSection';
+import { useNavigate } from 'react-router-dom';
 
 const categories = [
-  { name: 'Reading', icon: <Book />, color: 'bg-pastel-blue' },
-  { name: 'Writing', icon: <FileText />, color: 'bg-pastel-green' },
-  { name: 'Videos', icon: <PlayCircle />, color: 'bg-pastel-yellow' },
-  { name: 'Games', icon: <Puzzle />, color: 'bg-pastel-pink' },
+  { name: 'Reading', icon: <Book />, color: 'bg-pastel-blue', path: '/reading' },
+  { name: 'Writing', icon: <FileText />, color: 'bg-pastel-green', path: '/writing' },
+  { name: 'Videos', icon: <PlayCircle />, color: 'bg-pastel-yellow', path: '/video-section' },
+  { name: 'Games', icon: <Puzzle />, color: 'bg-pastel-pink', path: '/games' },
 ];
 
 const LearningCategories = () => {
-  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const navigate = useNavigate();
 
-  const handleCategoryClick = (categoryName: string) => {
-    setSelectedCategory(categoryName === selectedCategory ? null : categoryName);
+  const handleCategoryClick = (path: string) => {
+    navigate(path);
   };
 
   return (
@@ -24,10 +24,8 @@ const LearningCategories = () => {
         {categories.map((category) => (
           <button 
             key={category.name}
-            onClick={() => handleCategoryClick(category.name)}
-            className={`${category.color} rounded-xl p-6 flex flex-col items-center gap-3 shadow hover:shadow-md transition-all hover:scale-105 animate-pop ${
-              selectedCategory === category.name ? 'ring-4 ring-primary/30' : ''
-            }`}
+            onClick={() => handleCategoryClick(category.path)}
+            className={`${category.color} rounded-xl p-6 flex flex-col items-center gap-3 shadow hover:shadow-md transition-all hover:scale-105 animate-pop`}
           >
             <AnimatedIcon animation="bounce" size="lg">
               {category.icon}
@@ -36,8 +34,6 @@ const LearningCategories = () => {
           </button>
         ))}
       </div>
-
-      {selectedCategory === 'Videos' && <VideoSection />}
     </div>
   );
 };
