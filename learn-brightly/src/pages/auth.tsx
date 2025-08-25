@@ -1,18 +1,20 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Card, CardContent } from "../components/card";
 import { Input } from "../components/input";
 import { Button } from "../components/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/tabs";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import logo from "../assets/learn-bright-logo.svg";
 
 const AuthPage: React.FC = () => {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const [tab, setTab] = useState("login");
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
+  const [userType, setUserType] = useState<"parent" | "student">("student");
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
 
@@ -24,30 +26,85 @@ const AuthPage: React.FC = () => {
     guardianName: ""
   });
 
+  // Get user type from URL query parameter
+  useEffect(() => {
+    const urlUserType = searchParams.get("userType");
+    console.log('URL userType parameter:', urlUserType);
+    if (urlUserType === "parent" || urlUserType === "student") {
+      setUserType(urlUserType);
+      console.log('Setting userType to:', urlUserType);
+    } else {
+      console.log('Invalid or missing userType in URL, defaulting to student');
+    }
+  }, [searchParams]);
+
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
+    console.log('Signup attempt with userType:', userType);
+    console.log('Signup data:', signupData);
+
+    // Validate required fields based on user type
+    if (userType === "student") {
+      if (!signupData.fullName || !signupData.email || !signupData.password || !signupData.age || !signupData.guardianName) {
+        setError("Please fill in all required fields for student registration");
+        setIsLoading(false);
+        return;
+      }
+    } else if (userType === "parent") {
+      if (!signupData.fullName || !signupData.email || !signupData.password) {
+        setError("Please fill in all required fields for parent registration");
+        setIsLoading(false);
+        return;
+      }
+    } else {
+      setError("Invalid user type selected");
+      setIsLoading(false);
+      return;
+    }
+
     try {
+      const signupPayload = {
+        username: signupData.fullName,
+        email: signupData.email,
+        password: signupData.password,
+        role: userType
+      };
+
+      // Only add student-specific fields if user is a student
+      if (userType === "student") {
+        Object.assign(signupPayload, {
+          age: signupData.age,
+          guardianName: signupData.guardianName
+        });
+      }
+
+      console.log('Sending signup payload:', signupPayload);
+
       const res = await fetch("http://localhost:5000/api/auth/signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          username: signupData.fullName,
-          email: signupData.email,
-          password: signupData.password,
-          role: "student",
-          age: signupData.age,
-          guardianName: signupData.guardianName
-        })
+        body: JSON.stringify(signupPayload)
       });
 
       const data = await res.json();
+      console.log('Signup response:', data);
+      
       if (!res.ok) throw new Error(data.error || "Signup failed");
 
-      navigate("/dyslexia-test");
+      localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+      
+      // Redirect based on user type
+      if (userType === "parent") {
+        navigate("/parentdashboard");
+      } else {
+        navigate("/dyslexia-test");
+      }
     } catch (err: any) {
+      console.error('Signup error:', err);
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -69,10 +126,39 @@ const AuthPage: React.FC = () => {
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
 
+      // Store token and user data
       localStorage.setItem("token", data.token);
+      localStorage.setItem("user", JSON.stringify(data.user));
+
+      // Check if user is a parent
+      if (data.user.role === "parent") {
+        navigate("/parentdashboard");
+        return;
+      }
+
+      // For students, check if they have already taken the test
+      const scoreRes = await fetch("http://localhost:5000/api/auth/dyslexia-score", {
+        headers: {
+          'Authorization': `Bearer ${data.token}`
+        }
+      });
+
+      if (scoreRes.ok) {
+        const scoreData = await scoreRes.json();
+        if (scoreData.score !== null) {
+          // User has already taken the test, redirect to dashboard
+          navigate("/dashboard");
+          return;
+        }
+      }
+
+      // User hasn't taken the test yet, redirect to test
       navigate("/dyslexia-test");
     } catch (err: any) {
       setError(err.message);
+      // Clear any existing token/user data on error
+      localStorage.removeItem("token");
+      localStorage.removeItem("user");
     } finally {
       setIsLoading(false);
     }
@@ -117,13 +203,66 @@ const AuthPage: React.FC = () => {
           <Card className="mt-4 shadow-md bg-[#FFF1EB]">
             <CardContent className="p-6 space-y-4">
               <form onSubmit={handleSignup}>
-                <h2 className="text-xl font-semibold text-[#444]">Create an Account</h2> <br />
-                <Input type="text" value={signupData.fullName} onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })} placeholder="Full Name" className="rounded-xl text-black" required /> <br />
-                <Input type="email" value={signupData.email} onChange={(e) => setSignupData({ ...signupData, email: e.target.value })} placeholder="Email" className="rounded-xl text-black" required /> <br />
-                <Input type="text" value={signupData.age} onChange={(e) => setSignupData({ ...signupData, age: e.target.value })} placeholder="Age" className="rounded-xl text-black" required /> <br />
-                <Input type="text" value={signupData.guardianName} onChange={(e) => setSignupData({ ...signupData, guardianName: e.target.value })} placeholder="Guardian Name" className="rounded-xl text-black" required /> <br />
-                <Input type={showSignupPassword ? "text" : "password"} value={signupData.password} onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} placeholder="Password" className="rounded-xl text-black" required />
-                <Button type="submit" className="w-full mt-4" disabled={isLoading}>{isLoading ? "Signing up..." : "Sign Up"}</Button>
+                <div className="text-center mb-4">
+                  <h2 className="text-xl font-semibold text-[#444]">Create an Account</h2>
+                  <p className="text-sm text-[#666] mt-1">
+                    {userType === "student" ? "Student Registration" : "Parent/Guardian Registration"}
+                  </p>
+                </div>
+                
+                <Input 
+                  type="text" 
+                  value={signupData.fullName} 
+                  onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })} 
+                  placeholder={userType === "student" ? "Student Full Name" : "Full Name"} 
+                  className="rounded-xl text-black" 
+                  required 
+                /> 
+                <br />
+                <Input 
+                  type="email" 
+                  value={signupData.email} 
+                  onChange={(e) => setSignupData({ ...signupData, email: e.target.value })} 
+                  placeholder="Email" 
+                  className="rounded-xl text-black" 
+                  required 
+                /> 
+                <br />
+                
+                {userType === "student" && (
+                  <>
+                    <Input 
+                      type="text" 
+                      value={signupData.age} 
+                      onChange={(e) => setSignupData({ ...signupData, age: e.target.value })} 
+                      placeholder="Age" 
+                      className="rounded-xl text-black" 
+                      required 
+                    /> 
+                    <br />
+                    <Input 
+                      type="text" 
+                      value={signupData.guardianName} 
+                      onChange={(e) => setSignupData({ ...signupData, guardianName: e.target.value })} 
+                      placeholder="Guardian Name" 
+                      className="rounded-xl text-black" 
+                      required 
+                    /> 
+                    <br />
+                  </>
+                )}
+                
+                <Input 
+                  type={showSignupPassword ? "text" : "password"} 
+                  value={signupData.password} 
+                  onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} 
+                  placeholder="Password" 
+                  className="rounded-xl text-black" 
+                  required 
+                />
+                <Button type="submit" className="w-full mt-4" disabled={isLoading}>
+                  {isLoading ? "Signing up..." : "Sign Up"}
+                </Button>
               </form>
             </CardContent>
           </Card>

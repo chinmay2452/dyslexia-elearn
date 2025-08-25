@@ -56,6 +56,12 @@ async function startServer() {
             console.log('Users collection created');
         }
 
+        if (!collectionNames.includes('parents')) {
+            console.log('Creating parents collection...');
+            await db.createCollection('parents');
+            console.log('parents collection created');
+        }
+
         // Routes
         app.use('/api/auth', authRoutes);
         console.log('Auth routes mounted at /api/auth');

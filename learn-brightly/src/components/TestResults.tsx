@@ -1,16 +1,87 @@
-import React from 'react';
-import { Button } from "../components/button";
-import { Link } from "react-router-dom";
-import ReadingText from '../components/ReadingText.tsx';
+import React, { useEffect } from 'react';
+import { Button } from "./button";
+import { Link, useNavigate } from "react-router-dom";
+import ReadingText from './ReadingText';
 import { AlertCircle, BookOpen, Home, Redo, GraduationCap } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from "../components/alert";
+import { Alert, AlertDescription, AlertTitle } from "./alert";
 import { motion } from "framer-motion";
+import { useToast } from "../hooks/use-toast";
+import { jwtDecode } from 'jwt-decode';
 
 interface TestResultsProps {
   score: number;
 }
 
+interface DecodedToken {
+  id: string;
+  email: string;
+  role: string;
+}
+
 const TestResults: React.FC<TestResultsProps> = ({ score }) => {
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const saveScore = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          navigate('/');
+          return;
+        }
+
+        const response = await fetch('http://localhost:5000/api/auth/update-dyslexia-score', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+          },
+          body: JSON.stringify({ score })
+        });
+
+        if (!response.ok) {
+          if (response.status === 401) {
+            // Token is invalid or expired, redirect to login
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            navigate('/');
+            return;
+          }
+          throw new Error('Failed to save score');
+        }
+
+        toast({
+          title: "Score saved successfully",
+          description: "Your dyslexia test results have been saved.",
+        });
+
+        // Ensure token is still valid
+        const verifyResponse = await fetch('http://localhost:5000/api/auth/verify', {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (!verifyResponse.ok) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          navigate('/');
+          return;
+        }
+      } catch (error) {
+        console.error('Error saving score:', error);
+        toast({
+          title: "Error saving score",
+          description: "There was a problem saving your test results.",
+          variant: "destructive"
+        });
+      }
+    };
+
+    saveScore();
+  }, [score, navigate, toast]);
+
   // Determine result level based on score
   let resultLevel = '';
   let resultMessage = '';

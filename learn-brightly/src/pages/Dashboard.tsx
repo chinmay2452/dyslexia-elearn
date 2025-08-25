@@ -1,7 +1,6 @@
-
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Button } from "../components/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import DyslexiaHeader from '../components/DyslexiaHeader';
 import ProgressTracker from '../components/ProgressTracker';
 import LearningCategories from '../components/LearningCategories';
@@ -9,8 +8,113 @@ import LearningModules from '../components/LearningModules';
 import { Lightbulb, Book, Puzzle, User, ClipboardCheck } from 'lucide-react';
 import AnimatedIcon from '../components/AnimatedIcon';
 import ReadingText from '../components/ReadingText';
+import { useToast } from "../hooks/use-toast";
+
+interface UserData {
+  username: string;
+  email: string;
+  role: string;
+  dyslexiaScore?: number;
+  lastTestDate?: string;
+}
 
 const Index = () => {
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const { toast } = useToast();
+  const navigate = useNavigate();
+
+  const handleLogout = () => {
+    // Clear local storage
+    localStorage.removeItem('token');
+    localStorage.removeItem('user');
+    
+    // Show success message
+    toast({
+      title: "Logged out successfully",
+      description: "You have been logged out of your account.",
+    });
+    
+    // Redirect to login page
+    navigate('/');
+  };
+
+  useEffect(() => {
+    const fetchUserData = async () => {
+      try {
+        const token = localStorage.getItem('token');
+        const storedUser = localStorage.getItem('user');
+        
+        if (!token || !storedUser) {
+          localStorage.removeItem('token');
+          localStorage.removeItem('user');
+          navigate('/');
+          return;
+        }
+
+        // Fetch user data
+        const userResponse = await fetch('http://localhost:5000/api/auth/verify', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!userResponse.ok) {
+          if (userResponse.status === 401) {
+            // Token is invalid or expired
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            navigate('/');
+            return;
+          }
+          throw new Error('Failed to fetch user data');
+        }
+
+        const userData = await userResponse.json();
+
+        // Fetch dyslexia score
+        const scoreResponse = await fetch('http://localhost:5000/api/auth/dyslexia-score', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (!scoreResponse.ok) {
+          if (scoreResponse.status === 401) {
+            // Token is invalid or expired
+            localStorage.removeItem('token');
+            localStorage.removeItem('user');
+            navigate('/');
+            return;
+          }
+          throw new Error('Failed to fetch dyslexia score');
+        }
+
+        const scoreData = await scoreResponse.json();
+        
+        setUserData({
+          ...userData.user,
+          dyslexiaScore: scoreData.score,
+          lastTestDate: scoreData.lastTestDate
+        });
+      } catch (error) {
+        console.error('Error fetching user data:', error);
+        toast({
+          title: "Error loading user data",
+          description: "There was a problem loading your information.",
+          variant: "destructive"
+        });
+        // If there's an error, redirect to login
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
+        navigate('/');
+      }
+    };
+
+    fetchUserData();
+  }, [navigate, toast]);
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-pastel-blue/30 pb-24">
       <DyslexiaHeader />
@@ -19,7 +123,7 @@ const Index = () => {
         {/* Welcome Message */}
         <div className="bg-pastel-peach rounded-2xl p-6 mb-8 shadow-lg flex flex-col md:flex-row items-center gap-6 animate-pop">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-4">Welcome back, Alex!</h1>
+            <h1 className="text-3xl font-bold mb-4">Welcome back, {userData?.username || 'User'}!</h1>
             <ReadingText size="lg">
               Ready to continue your learning adventure? 
               We've got some fun activities just for you today!
@@ -48,14 +152,28 @@ const Index = () => {
         <div className="bg-pastel-purple/80 rounded-2xl p-6 mb-8 shadow-lg animate-pop">
           <div className="flex flex-col md:flex-row items-center gap-6">
             <div className="flex-1">
-              <h2 className="text-2xl font-bold mb-2 text-white">Wondering if you have dyslexia?</h2>
-              <ReadingText className="text-white opacity-90 mb-4">
-                Take our quick screening test to check if you show signs of dyslexia. 
-                It only takes about 5 minutes to complete!
-              </ReadingText>
+              <h2 className="text-2xl font-bold mb-2 text-white">Dyslexia Screening Test</h2>
+              {userData?.dyslexiaScore !== undefined ? (
+                <div className="mb-4">
+                  <ReadingText className="text-white opacity-90">
+                    Your last test score: <span className="font-bold">{userData.dyslexiaScore}%</span>
+                    {userData.lastTestDate && (
+                      <span className="text-sm ml-2">
+                        (Taken on {new Date(userData.lastTestDate).toLocaleDateString()})
+                      </span>
+                    )}
+                  </ReadingText>
+                </div>
+              ) : (
+                <ReadingText className="text-white opacity-90 mb-4">
+                  Take our quick screening test to check if you show signs of dyslexia. 
+                  It only takes about 5 minutes to complete!
+                </ReadingText>
+              )}
               <Link to="/test">
                 <Button className="bg-white text-pastel-purple hover:bg-gray-100 rounded-xl py-5 px-6 text-lg font-bold shadow-md hover:shadow-lg flex items-center gap-2">
-                  <ClipboardCheck className="h-5 w-5" /> Take Dyslexia Test
+                  <ClipboardCheck className="h-5 w-5" /> 
+                  {userData?.dyslexiaScore !== undefined ? 'Retake Test' : 'Take Dyslexia Test'}
                 </Button>
               </Link>
             </div>
