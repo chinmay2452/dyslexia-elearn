@@ -25,11 +25,28 @@ router.use((req, res, next) => {
 router.post('/signup', initAuthService, async (req, res) => {
     try {
         const { username, email, password, role, age, guardianName } = req.body;
+        
+        console.log('Signup request received:', { username, email, password, role, age, guardianName });
 
-        if (!username || !email || !password || !age || !guardianName) {
+        if (!username || !email || !password) {
+            console.log('Missing basic fields:', { username: !!username, email: !!email, password: !!password });
             return res.status(400).json({ error: 'Missing required fields' });
         }
 
+        // Validate required fields based on role
+        if (role === 'student') {
+            if (!age || !guardianName) {
+                console.log('Student missing fields:', { age: !!age, guardianName: !!guardianName });
+                return res.status(400).json({ error: 'Age and guardian name are required for students' });
+            }
+        } else if (role === 'parent') {
+            console.log('Parent signup - no additional fields required');
+        } else {
+            console.log('Invalid role:', role);
+            return res.status(400).json({ error: 'Invalid role specified' });
+        }
+
+        console.log('Validation passed, calling authService.signup');
         const result = await authService.signup({
             username,
             email,
@@ -39,6 +56,7 @@ router.post('/signup', initAuthService, async (req, res) => {
             guardianName
         });
 
+        console.log('Signup successful:', result);
         res.status(201).json(result);
     } catch (error) {
         console.error('Signup error:', error.message);
@@ -115,8 +133,19 @@ router.get('/dyslexia-score', initAuthService, async (req, res) => {
         }
 
         const user = await authService.verifyToken(token);
-        const result = await authService.getDyslexiaScore(user.id);
-        res.json(result);
+        
+        // Check if userId query parameter is provided (for parents viewing children's scores)
+        const { userId } = req.query;
+        
+        if (userId && user.role === 'parent') {
+            // Parent is requesting a specific child's score
+            const result = await authService.getDyslexiaScore(userId);
+            res.json(result);
+        } else {
+            // User is requesting their own score
+            const result = await authService.getDyslexiaScore(user.id);
+            res.json(result);
+        }
     } catch (error) {
         console.error('Get dyslexia score error:', error.message);
         res.status(401).json({ error: error.message });
@@ -179,8 +208,16 @@ router.post('/update-account', initAuthService, async (req, res) => {
         }
 
         const { username, email, age, guardianName } = req.body;
-        if (!username || !email || !age || !guardianName) {
-            return res.status(400).json({ error: 'Missing required fields' });
+        
+        // Validate required fields based on role
+        if (user.role === 'student') {
+            if (!username || !email || !age || !guardianName) {
+                return res.status(400).json({ error: 'Missing required fields for student' });
+            }
+        } else if (user.role === 'parent') {
+            if (!username || !email) {
+                return res.status(400).json({ error: 'Missing required fields for parent' });
+            }
         }
 
         const result = await authService.updateAccount(user.id, {

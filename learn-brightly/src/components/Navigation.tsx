@@ -1,11 +1,23 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, BookOpen, Puzzle, User, Info, HelpCircle } from 'lucide-react';
+import { Home, BookOpen, Puzzle, User, Info, HelpCircle, Users } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  const [showProfileMenu, setShowProfileMenu] = useState(false);
+  const [userRole, setUserRole] = useState<string>('student');
+  
+  useEffect(() => {
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        setUserRole(userData.role || 'student');
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
+  }, []);
   
   // Check if user is authenticated and has completed the test
   const isAuthenticated = () => {
@@ -14,8 +26,8 @@ const Navigation = () => {
     return token && user;
   };
 
-  // Don't show navigation on auth page or test page
-  if (location.pathname === '/' || location.pathname === '/dyslexia-test') {
+  // Don't show navigation on auth page, test page, or user type page
+  if (location.pathname === '/' || location.pathname === '/auth' || location.pathname === '/dyslexia-test') {
     return null;
   }
 
@@ -29,6 +41,36 @@ const Navigation = () => {
     return location.pathname === path;
   };
 
+  // Different navigation for parents vs students
+  if (userRole === 'parent') {
+    return (
+      <nav className="fixed bottom-0 left-0 right-0 bg-pastel-blue py-2 px-4 rounded-t-2xl shadow-lg z-50">
+        <div className="max-w-6xl mx-auto flex justify-around items-center">
+          <Link to="/parentdashboard" className={`flex flex-col items-center p-2 ${isActive('/parentdashboard') ? 'bg-white/30 rounded-xl' : ''}`}>
+            <Home className={`h-6 w-6 ${isActive('/parentdashboard') ? 'text-primary' : ''}`} />
+            <span className="text-xs font-bold mt-1">Dashboard</span>
+          </Link>
+          
+          <Link to="/dyslexia" className={`flex flex-col items-center p-2 ${isActive('/dyslexia') ? 'bg-white/30 rounded-xl' : ''}`}>
+            <Info className={`h-6 w-6 ${isActive('/dyslexia') ? 'text-primary' : ''}`} />
+            <span className="text-xs font-bold mt-1">Dyslexia</span>
+          </Link>
+          
+          <Link to="/help-support" className={`flex flex-col items-center p-2 ${isActive('/help-support') ? 'bg-white/30 rounded-xl' : ''}`}>
+            <HelpCircle className={`h-6 w-6 ${isActive('/help-support') ? 'text-primary' : ''}`} />
+            <span className="text-xs font-bold mt-1">Help</span>
+          </Link>
+
+          <Link to="/profile" className={`flex flex-col items-center p-2 ${isActive('/profile') ? 'bg-white/30 rounded-xl' : ''}`}>
+            <User className={`h-6 w-6 ${isActive('/profile') ? 'text-primary' : ''}`} />
+            <span className="text-xs font-bold mt-1">Profile</span>
+          </Link>
+        </div>
+      </nav>
+    );
+  }
+
+  // Default navigation for students
   return (
     <nav className="fixed bottom-0 left-0 right-0 bg-pastel-blue py-2 px-4 rounded-t-2xl shadow-lg z-50">
       <div className="max-w-6xl mx-auto flex justify-around items-center">
@@ -51,37 +93,11 @@ const Navigation = () => {
           <Info className={`h-6 w-6 ${isActive('/dyslexia') ? 'text-primary' : ''}`} />
           <span className="text-xs font-bold mt-1">Dyslexia</span>
         </Link>
-        
-        <div className="relative">
-          <button 
-            onClick={() => setShowProfileMenu(!showProfileMenu)}
-            className={`flex flex-col items-center p-2 ${isActive('/profile') || isActive('/help-support') ? 'bg-white/30 rounded-xl' : ''}`}
-          >
-            <User className={`h-6 w-6 ${isActive('/profile') || isActive('/help-support') ? 'text-primary' : ''}`} />
-            <span className="text-xs font-bold mt-1">Profile</span>
-          </button>
-          
-          {showProfileMenu && (
-            <div className="absolute bottom-full mb-2 right-0 bg-white rounded-lg shadow-lg py-2 w-48">
-              <Link 
-                to="/profile" 
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                onClick={() => setShowProfileMenu(false)}
-              >
-                <User className="h-4 w-4 mr-2" />
-                Profile
-              </Link>
-              <Link 
-                to="/help-support" 
-                className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                onClick={() => setShowProfileMenu(false)}
-              >
-                <HelpCircle className="h-4 w-4 mr-2" />
-                Help & Support
-              </Link>
-            </div>
-          )}
-        </div>
+
+        <Link to="/profile" className={`flex flex-col items-center p-2 ${isActive('/profile') ? 'bg-white/30 rounded-xl' : ''}`}>
+          <User className={`h-6 w-6 ${isActive('/profile') ? 'text-primary' : ''}`} />
+          <span className="text-xs font-bold mt-1">Profile</span>
+        </Link>
       </div>
     </nav>
   );

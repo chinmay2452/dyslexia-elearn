@@ -207,75 +207,123 @@ const ReadingPreferencesSheet = ({ open, setOpen }: { open: boolean, setOpen: (v
   );
 };
 
-const AccountSettingsSheet = ({ open, setOpen, userData, onUpdate }: { 
-  open: boolean, 
-  setOpen: (v: boolean) => void,
-  userData: UserData | null,
-  onUpdate: (data: UserData) => void 
-}) => {
+const AccountSettingsSheet = ({ open, setOpen }: { open: boolean, setOpen: (v: boolean) => void }) => {
   const [settings, setSettings] = useState<AccountSettings>({
-    username: userData?.username || '',
-    email: userData?.email || '',
-    age: userData?.age || '',
-    guardianName: userData?.guardianName || ''
+    username: '',
+    email: '',
+    age: '',
+    guardianName: ''
   });
-  const [loading, setLoading] = useState(false);
+  const [userRole, setUserRole] = useState<string>('student');
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (open && userData) {
-      setSettings({
-        username: userData.username,
-        email: userData.email,
-        age: userData.age,
-        guardianName: userData.guardianName
-      });
+    if (open) {
+      setLoading(true);
+      setError(null);
+      setSuccess(false);
+      
+      const token = localStorage.getItem('token');
+      const storedUser = localStorage.getItem('user');
+      
+      if (storedUser) {
+        try {
+          const userData = JSON.parse(storedUser);
+          setUserRole(userData.role || 'student');
+        } catch (error) {
+          console.error('Error parsing user data:', error);
+        }
+      }
+
+      fetch('http://localhost:5000/api/auth/verify', {
+        headers: { 'Authorization': `Bearer ${token}` }
+      })
+        .then(res => res.json())
+        .then(data => {
+          if (data.user) {
+            setSettings({
+              username: data.user.username || '',
+              email: data.user.email || '',
+              age: data.user.age || '',
+              guardianName: data.user.guardianName || ''
+            });
+          }
+          setLoading(false);
+        })
+        .catch(() => {
+          setError('Failed to load account data');
+          setLoading(false);
+        });
     }
-  }, [open, userData]);
+  }, [open]);
 
   const handleSave = async () => {
-    setLoading(true);
+    setSaving(true);
     setError(null);
     setSuccess(false);
+    
     const token = localStorage.getItem('token');
     try {
+      const payload = {
+        username: settings.username,
+        email: settings.email
+      };
+
+      // Only include age and guardianName for students
+      if (userRole === 'student') {
+        Object.assign(payload, {
+          age: settings.age,
+          guardianName: settings.guardianName
+        });
+      }
+
       const res = await fetch('http://localhost:5000/api/auth/update-account', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(settings)
+        body: JSON.stringify(payload)
       });
-      
-      if (!res.ok) throw new Error('Failed to update account');
-      
-      const data = await res.json();
-      onUpdate(data.user);
-      setSuccess(true);
-      setTimeout(() => setOpen(false), 1500);
-    } catch (e) {
-      setError('Failed to update account settings');
+
+      if (res.ok) {
+        setSuccess(true);
+        // Update local storage
+        const storedUser = localStorage.getItem('user');
+        if (storedUser) {
+          try {
+            const userData = JSON.parse(storedUser);
+            const updatedUser = { ...userData, ...payload };
+            localStorage.setItem('user', JSON.stringify(updatedUser));
+          } catch (error) {
+            console.error('Error updating local storage:', error);
+          }
+        }
+      } else {
+        const errorData = await res.json();
+        setError(errorData.error || 'Failed to update account');
+      }
+    } catch (err) {
+      setError('Failed to update account');
     } finally {
-      setLoading(false);
+      setSaving(false);
     }
   };
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetContent className="w-[400px] sm:w-[540px] overflow-y-auto">
+      <SheetContent className="w-[400px] sm:w-[540px]">
         <SheetHeader>
-          <SheetTitle className="text-2xl flex items-center gap-2">
-            <UserCircle className="h-6 w-6" />
-            Account Settings
-          </SheetTitle>
+          <SheetTitle>Account Settings</SheetTitle>
           <SheetDescription>
-            Update your account information
+            Update your account information and preferences.
           </SheetDescription>
         </SheetHeader>
-        
-        <div className="py-6 space-y-6">
+
+        <div className="space-y-6 py-6">
           <div className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="username">Username</Label>
@@ -307,35 +355,40 @@ const AccountSettingsSheet = ({ open, setOpen, userData, onUpdate }: {
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="age">Age</Label>
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-gray-500" />
-                <input
-                  id="age"
-                  type="text"
-                  value={settings.age}
-                  onChange={(e) => setSettings({ ...settings, age: e.target.value })}
-                  className="flex-1 p-2 rounded-md border"
-                  placeholder="Enter your age"
-                />
-              </div>
-            </div>
+            {/* Only show age and guardian fields for students */}
+            {userRole === 'student' && (
+              <>
+                <div className="space-y-2">
+                  <Label htmlFor="age">Age</Label>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-gray-500" />
+                    <input
+                      id="age"
+                      type="text"
+                      value={settings.age}
+                      onChange={(e) => setSettings({ ...settings, age: e.target.value })}
+                      className="flex-1 p-2 rounded-md border"
+                      placeholder="Enter your age"
+                    />
+                  </div>
+                </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="guardian">Guardian Name</Label>
-              <div className="flex items-center gap-2">
-                <User className="h-4 w-4 text-gray-500" />
-                <input
-                  id="guardian"
-                  type="text"
-                  value={settings.guardianName}
-                  onChange={(e) => setSettings({ ...settings, guardianName: e.target.value })}
-                  className="flex-1 p-2 rounded-md border"
-                  placeholder="Enter guardian's name"
-                />
-              </div>
-            </div>
+                <div className="space-y-2">
+                  <Label htmlFor="guardian">Guardian Name</Label>
+                  <div className="flex items-center gap-2">
+                    <User className="h-4 w-4 text-gray-500" />
+                    <input
+                      id="guardian"
+                      type="text"
+                      value={settings.guardianName}
+                      onChange={(e) => setSettings({ ...settings, guardianName: e.target.value })}
+                      className="flex-1 p-2 rounded-md border"
+                      placeholder="Enter guardian's name"
+                    />
+                  </div>
+                </div>
+              </>
+            )}
           </div>
 
           {error && <div className="text-red-500 text-sm">{error}</div>}
@@ -747,8 +800,6 @@ const Profile = () => {
       <AccountSettingsSheet 
         open={showAccountSettings} 
         setOpen={setShowAccountSettings}
-        userData={userData}
-        onUpdate={handleUserUpdate}
       />
       <NotificationSettingsSheet
         open={notificationSettingsOpen}

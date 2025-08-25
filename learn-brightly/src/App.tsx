@@ -5,6 +5,7 @@ import AuthPage from './pages/auth'
 import DyslexiaTest from './pages/DyslexiaTest'
 import { ToastProvider, ToastViewport } from "./components/toast"
 import Dashboard from './pages/Dashboard'
+import ParentDashboard from './pages/parentdashboard'
 import Navigation from './components/Navigation'
 import Reading from './pages/Reading'
 import Games from './pages/Games'
@@ -16,14 +17,17 @@ import StoryBuilder from './pages/StoryBuilder'
 import WordBubbles from './pages/WordBubbles'
 import HelpSupport from './pages/HelpSupport'
 import VideoSection from './components/VideoSection'
+import UserTypePage from './pages/usertype'
 
 function App() {
   return (
     <Router>
       <ToastProvider>
         <Routes>
-          <Route path="/" element={<AuthPage />} />
+          <Route path="/" element={<UserTypePage />} />
+          <Route path="/auth" element={<AuthPage />} />
           <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/parentdashboard" element={<ParentDashboard />} />
           <Route path="/reading" element={<Reading />} />
           <Route path="/games" element={<Games />} />
           <Route path="/games/word-match" element={<WordMatch />} />
@@ -37,6 +41,8 @@ function App() {
           <Route path="/video-section" element={<VideoSection />} />
         </Routes>
         <ToastViewport />
+        {/* Spacer to prevent overlap with fixed bottom Navigation */}
+        <div className="h-24 md:h-20" aria-hidden="true" />
         <Navigation />
       </ToastProvider>
     </Router>

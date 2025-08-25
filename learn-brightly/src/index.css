@@ -4,6 +4,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Prevent content from being covered by fixed bottom navigation */
+:root {
+  --bottom-nav-height: 80px;
+}
+
+body {
+  padding-bottom: var(--bottom-nav-height);
+}
+
+/* Account for iOS safe area insets when available */
+@supports (padding-bottom: env(safe-area-inset-bottom)) {
+  body {
+    padding-bottom: calc(var(--bottom-nav-height) + env(safe-area-inset-bottom));
+  }
+}
+
 html, body, #root {
   font-family: system-ui, Avenir, Helvetica, Arial, sans-serif;
   line-height: 1.5;

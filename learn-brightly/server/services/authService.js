@@ -1,32 +1,94 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import User from '../models/User.js';
+import Parent from '../models/Parent.js';
 import { ObjectId } from 'mongodb';
 
 class AuthService {
     constructor(db) {
         this.db = db;
         this.usersCollection = db.collection(User.collectionName);
+        this.parentsCollection = db.collection(Parent.collectionName);
         console.log('AuthService initialized with DB:', db.databaseName);
+        console.log('Users collection:', User.collectionName, this.usersCollection);
+        console.log('Parents collection:', Parent.collectionName, this.parentsCollection);
     }
 
     async signup(userData) {
+        const { role } = userData;
+        console.log('AuthService.signup called with role:', role);
+        
+        if (role === 'parent') {
+            console.log('Calling signupParent');
+            return await this.signupParent(userData);
+        } else {
+            console.log('Calling signupStudent');
+            return await this.signupStudent(userData);
+        }
+    }
+
+    async signupParent(userData) {
+        try {
+            console.log('signupParent called with data:', userData);
+            console.log('Using collection:', Parent.collectionName);
+            console.log('Collection object:', this.parentsCollection);
+            
+            const existingUser = await this.parentsCollection.findOne({
+                $or: [{ email: userData.email }, { username: userData.username }]
+            });
+        
+            if (existingUser) {
+                throw new Error('Parent account already exists');
+            }
+        
+            const hashedPassword = await bcrypt.hash(userData.password, 10);
+        
+            const newParent = new Parent(
+                userData.username,
+                userData.email,
+                hashedPassword,
+                'parent'
+            );
+            
+            console.log('New parent object created:', newParent);
+        
+            const insertResult = await this.parentsCollection.insertOne(newParent);
+            console.log('Parent inserted:', insertResult);
+            
+            const token = this.generateToken(newParent);
+        
+            return {
+                user: {
+                    id: newParent._id.toString(),
+                    username: newParent.username,
+                    email: newParent.email,
+                    role: newParent.role,
+                    children: newParent.children
+                },
+                token
+            };
+        } catch (error) {
+            console.error('Error in signupParent:', error);
+            throw error;
+        }
+    }
+
+    async signupStudent(userData) {
         const existingUser = await this.usersCollection.findOne({
             $or: [{ email: userData.email }, { username: userData.username }]
         });
     
         if (existingUser) {
-            throw new Error('User already exists');
+            throw new Error('Student account already exists');
         }
     
         const hashedPassword = await bcrypt.hash(userData.password, 10);
     
-        // Pass all user data including age and guardianName
         const newUser = new User(
             userData.username,
             userData.email,
             hashedPassword,
-            userData.role || 'student',
+            'student',
             userData.age,
             userData.guardianName
         );
@@ -48,29 +110,51 @@ class AuthService {
     }
 
     async login(email, password) {
-        const user = await this.usersCollection.findOne({ email });
+        // Try to find user in both collections
+        let user = await this.usersCollection.findOne({ email });
+        let collection = this.usersCollection;
+        
+        if (!user) {
+            user = await this.parentsCollection.findOne({ email });
+            collection = this.parentsCollection;
+        }
+        
         if (!user) throw new Error('Invalid credentials');
 
         const isMatch = await bcrypt.compare(password, user.password);
         if (!isMatch) throw new Error('Invalid credentials');
 
-        await this.usersCollection.updateOne(
+        await collection.updateOne(
             { _id: user._id },
             { $set: { lastLogin: new Date() } }
         );
 
         const token = this.generateToken(user);
-        return {
-            user: {
-                id: user._id.toString(),
-                username: user.username,
-                email: user.email,
-                role: user.role,
-                age: user.age,
-                guardianName: user.guardianName
-            },
-            token
-        };
+        
+        if (user.role === 'parent') {
+            return {
+                user: {
+                    id: user._id.toString(),
+                    username: user.username,
+                    email: user.email,
+                    role: user.role,
+                    children: user.children || []
+                },
+                token
+            };
+        } else {
+            return {
+                user: {
+                    id: user._id.toString(),
+                    username: user.username,
+                    email: user.email,
+                    role: user.role,
+                    age: user.age,
+                    guardianName: user.guardianName
+                },
+                token
+            };
+        }
     }
 
     generateToken(user) {
@@ -92,22 +176,39 @@ class AuthService {
                 throw new Error('Invalid token format');
             }
 
-            const user = await this.usersCollection.findOne({ 
+            // Try to find user in both collections
+            let user = await this.usersCollection.findOne({ 
                 _id: new ObjectId(decoded.id) 
             });
+            
+            if (!user) {
+                user = await this.parentsCollection.findOne({ 
+                    _id: new ObjectId(decoded.id) 
+                });
+            }
             
             if (!user) {
                 throw new Error('User not found');
             }
 
-            return {
-                id: user._id.toString(),
-                username: user.username,
-                email: user.email,
-                role: user.role,
-                age: user.age,
-                guardianName: user.guardianName
-            };
+            if (user.role === 'parent') {
+                return {
+                    id: user._id.toString(),
+                    username: user.username,
+                    email: user.email,
+                    role: user.role,
+                    children: user.children || []
+                };
+            } else {
+                return {
+                    id: user._id.toString(),
+                    username: user.username,
+                    email: user.email,
+                    role: user.role,
+                    age: user.age,
+                    guardianName: user.guardianName
+                };
+            }
         } catch (error) {
             console.error('Token verification error:', error);
             throw new Error('Invalid token');
@@ -125,7 +226,7 @@ class AuthService {
                     lastTestDate: new Date()
                 }
             },
-            { upsert: true } // This will create a new document if it doesn't exist
+            { upsert: true }
         );
         
         return { success: true, score };
@@ -138,21 +239,35 @@ class AuthService {
     }
 
     async getReadingPreferences(userId) {
-        const user = await this.usersCollection.findOne({ _id: new ObjectId(userId) });
+        // Try to find user in both collections
+        let user = await this.usersCollection.findOne({ _id: new ObjectId(userId) });
+        if (!user) {
+            user = await this.parentsCollection.findOne({ _id: new ObjectId(userId) });
+        }
         if (!user) throw new Error('User not found');
         return user.readingPreferences || null;
     }
 
     async updateReadingPreferences(userId, preferences) {
-        const result = await this.usersCollection.updateOne(
+        // Try to update in both collections
+        let result = await this.usersCollection.updateOne(
             { _id: new ObjectId(userId) },
             { $set: { readingPreferences: preferences } }
         );
+        
+        if (result.modifiedCount === 0) {
+            result = await this.parentsCollection.updateOne(
+                { _id: new ObjectId(userId) },
+                { $set: { readingPreferences: preferences } }
+            );
+        }
+        
         return { success: true };
     }
 
     async updateAccount(userId, accountData) {
-        const result = await this.usersCollection.updateOne(
+        // Try to update in both collections
+        let result = await this.usersCollection.updateOne(
             { _id: new ObjectId(userId) },
             { 
                 $set: { 
@@ -165,25 +280,58 @@ class AuthService {
         );
         
         if (result.modifiedCount === 0) {
+            result = await this.parentsCollection.updateOne(
+                { _id: new ObjectId(userId) },
+                { 
+                    $set: { 
+                        username: accountData.username,
+                        email: accountData.email
+                    }
+                }
+            );
+        }
+        
+        if (result.modifiedCount === 0) {
             throw new Error('Failed to update account');
         }
 
-        const updatedUser = await this.usersCollection.findOne({ _id: new ObjectId(userId) });
-        return {
-            user: {
-                id: updatedUser._id.toString(),
-                username: updatedUser.username,
-                email: updatedUser.email,
-                role: updatedUser.role,
-                age: updatedUser.age,
-                guardianName: updatedUser.guardianName
-            }
-        };
+        // Get updated user from appropriate collection
+        let updatedUser = await this.usersCollection.findOne({ _id: new ObjectId(userId) });
+        if (!updatedUser) {
+            updatedUser = await this.parentsCollection.findOne({ _id: new ObjectId(userId) });
+        }
+        
+        if (updatedUser.role === 'parent') {
+            return {
+                user: {
+                    id: updatedUser._id.toString(),
+                    username: updatedUser.username,
+                    email: updatedUser.email,
+                    role: updatedUser.role,
+                    children: updatedUser.children || []
+                }
+            };
+        } else {
+            return {
+                user: {
+                    id: updatedUser._id.toString(),
+                    username: updatedUser.username,
+                    email: updatedUser.email,
+                    role: updatedUser.role,
+                    age: updatedUser.age,
+                    guardianName: updatedUser.guardianName
+                }
+            };
+        }
     }
 
     async getNotificationSettings(userId) {
         try {
-            const user = await this.usersCollection.findOne({ _id: new ObjectId(userId) });
+            // Try to find user in both collections
+            let user = await this.usersCollection.findOne({ _id: new ObjectId(userId) });
+            if (!user) {
+                user = await this.parentsCollection.findOne({ _id: new ObjectId(userId) });
+            }
             if (!user) {
                 throw new Error('User not found');
             }
@@ -201,14 +349,29 @@ class AuthService {
 
     async updateNotificationSettings(userId, settings) {
         try {
-            const result = await this.usersCollection.updateOne(
+            // Try to update in both collections
+            let result = await this.usersCollection.updateOne(
                 { _id: new ObjectId(userId) },
                 { $set: { notificationSettings: settings } }
             );
+            
+            if (result.modifiedCount === 0) {
+                result = await this.parentsCollection.updateOne(
+                    { _id: new ObjectId(userId) },
+                    { $set: { notificationSettings: settings } }
+                );
+            }
+            
             if (result.modifiedCount === 0) {
                 throw new Error('Failed to update notification settings');
             }
-            const updatedUser = await this.usersCollection.findOne({ _id: new ObjectId(userId) });
+            
+            // Get updated user from appropriate collection
+            let updatedUser = await this.usersCollection.findOne({ _id: new ObjectId(userId) });
+            if (!updatedUser) {
+                updatedUser = await this.parentsCollection.findOne({ _id: new ObjectId(userId) });
+            }
+            
             return updatedUser.notificationSettings;
         } catch (error) {
             throw new Error(`Failed to update notification settings: ${error.message}`);
