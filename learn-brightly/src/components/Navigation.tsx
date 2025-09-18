@@ -1,22 +1,62 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Home, BookOpen, Puzzle, User, Info, HelpCircle, Users } from 'lucide-react';
+import { Home, BookOpen, Puzzle, User, Info, HelpCircle } from 'lucide-react';
 
 const Navigation = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const [userRole, setUserRole] = useState<string>('student');
-  
+
+  // Initialize role from localStorage immediately for first render
   useEffect(() => {
     const user = localStorage.getItem('user');
     if (user) {
       try {
         const userData = JSON.parse(user);
-        setUserRole(userData.role || 'student');
+        if (typeof userData?.role === 'string') {
+          setUserRole(userData.role);
+        }
       } catch (error) {
         console.error('Error parsing user data:', error);
       }
     }
+  }, []);
+
+  // Verify token with server to ensure accurate role, and update on route changes
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+    const controller = new AbortController();
+    fetch('http://localhost:5000/api/auth/verify', {
+      headers: { 'Authorization': `Bearer ${token}` },
+      signal: controller.signal
+    })
+      .then(async (res) => {
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data?.user?.role && typeof data.user.role === 'string') {
+          setUserRole(data.user.role);
+        }
+      })
+      .catch(() => {/* ignore */});
+    return () => controller.abort();
+    // Re-run when path changes to capture role after login redirects
+  }, [location.pathname]);
+
+  // React to localStorage changes (e.g., login/logout from other places)
+  useEffect(() => {
+    const onStorage = () => {
+      const user = localStorage.getItem('user');
+      if (!user) return;
+      try {
+        const userData = JSON.parse(user);
+        if (typeof userData?.role === 'string') {
+          setUserRole(userData.role);
+        }
+      } catch {/* ignore */}
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
   }, []);
   
   // Check if user is authenticated and has completed the test

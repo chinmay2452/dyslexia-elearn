@@ -23,6 +23,21 @@ const Index = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
+  // Redirect parents away from the student dashboard
+  useEffect(() => {
+    try {
+      const storedUser = localStorage.getItem('user');
+      if (storedUser) {
+        const parsed = JSON.parse(storedUser);
+        if (parsed?.role === 'parent') {
+          navigate('/parentdashboard');
+        }
+      }
+    } catch {
+      // ignore parse errors and continue; fetch below will handle auth
+    }
+  }, [navigate]);
+
   const handleLogout = () => {
     // Clear local storage
     localStorage.removeItem('token');
@@ -50,6 +65,15 @@ const Index = () => {
           navigate('/');
           return;
         }
+
+        // Ensure only students remain on this page
+        try {
+          const parsed = JSON.parse(storedUser);
+          if (parsed?.role === 'parent') {
+            navigate('/parentdashboard');
+            return;
+          }
+        } catch {}
 
         // Fetch user data
         const userResponse = await fetch('http://localhost:5000/api/auth/verify', {
