@@ -610,6 +610,9 @@ const Profile = () => {
   const [showPreferences, setShowPreferences] = useState(false);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
   const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false);
+  
+  // Check if user is a parent to apply normal font styling
+  const isParent = userData?.role === 'parent';
 
   useEffect(() => {
     const fetchUserData = async () => {
@@ -646,7 +649,7 @@ const Profile = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-pastel-purple/30 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-background to-pastel-purple/30 pb-24" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
       <DyslexiaHeader />
       
       <main className="max-w-6xl mx-auto px-4 py-6">
@@ -656,17 +659,17 @@ const Profile = () => {
               <User className="h-16 w-16 text-primary" />
             </div>
             <div className="flex-1 text-center md:text-left">
-              <h1 className="text-3xl font-bold mb-2">{userData?.username || 'Loading...'}</h1>
+              <h1 className="text-3xl font-bold mb-2" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>{userData?.username || 'Loading...'}</h1>
               <div className="space-y-1">
-                <p className="text-lg flex items-center gap-2">
+                <p className="text-lg flex items-center gap-2" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
                   <span className="font-semibold">Age:</span>
                   <span>{userData?.age || 'Not set'}</span>
                 </p>
-                <p className="text-lg flex items-center gap-2">
+                <p className="text-lg flex items-center gap-2" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
                   <span className="font-semibold">Guardian:</span>
                   <span>{userData?.guardianName || 'Not set'}</span>
                 </p>
-                <p className="text-lg flex items-center gap-2">
+                <p className="text-lg flex items-center gap-2" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
                   <span className="font-semibold">Email:</span>
                   <span>{userData?.email || 'Not set'}</span>
                 </p>

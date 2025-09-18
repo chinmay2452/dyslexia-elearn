@@ -22,6 +22,9 @@ const Index = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const { toast } = useToast();
   const navigate = useNavigate();
+  
+  // Check if user is a parent to apply normal font styling
+  const isParent = userData?.role === 'parent';
 
   const handleLogout = async () => {
     try {
@@ -131,26 +134,33 @@ const Index = () => {
   }, [navigate, toast]);
 
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-pastel-blue/30 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-background to-pastel-blue/30 pb-24" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
       <DyslexiaHeader />
       
       <main className="max-w-6xl mx-auto px-4 py-6">
         {/* Welcome Message */}
         <div className="bg-pastel-peach rounded-2xl p-6 mb-8 shadow-lg flex flex-col md:flex-row items-center gap-6 animate-pop">
           <div className="flex-1">
-            <h1 className="text-3xl font-bold mb-4">Welcome back, {userData?.username || 'User'}!</h1>
-            <ReadingText size="lg">
-              Ready to continue your learning adventure? 
-              We've got some fun activities just for you today!
-            </ReadingText>
+            <h1 className="text-3xl font-bold mb-4" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>Welcome back, {userData?.username || 'User'}!</h1>
+            {isParent ? (
+              <p className="text-lg mb-4" style={{ fontFamily: 'Arial, sans-serif' }}>
+                Ready to continue your learning adventure? 
+                We've got some fun activities just for you today!
+              </p>
+            ) : (
+              <ReadingText size="lg">
+                Ready to continue your learning adventure? 
+                We've got some fun activities just for you today!
+              </ReadingText>
+            )}
             <div className="flex flex-wrap gap-3 mt-4">
               <Link to="/reading">
-                <Button className="rounded-xl py-6 px-6 text-lg font-bold shadow-md hover:shadow-lg flex items-center gap-2">
+                <Button className="rounded-xl py-6 px-6 text-lg font-bold shadow-md hover:shadow-lg flex items-center gap-2" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
                   <Book className="h-5 w-5" /> Continue Reading
                 </Button>
               </Link>
               <Link to="/games">
-                <Button variant="outline" className="rounded-xl py-6 px-6 text-lg font-bold shadow-md hover:shadow-lg flex items-center gap-2">
+                <Button variant="outline" className="rounded-xl py-6 px-6 text-lg font-bold shadow-md hover:shadow-lg flex items-center gap-2" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
                   <Puzzle className="h-5 w-5" /> Play Games
                 </Button>
               </Link>

@@ -1,8 +1,13 @@
 import React from 'react';
 
 const HelpSupport: React.FC = () => {
+  // Check if user is a parent to apply normal font styling
+  const user = localStorage.getItem('user');
+  const userData = user ? JSON.parse(user) : null;
+  const isParent = userData?.role === 'parent';
+
   return (
-    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gray-50 py-8 px-4 sm:px-6 lg:px-8" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
       <div className="max-w-4xl mx-auto">
         <h1 className="text-3xl font-bold text-gray-900 mb-8">Help & Support</h1>
         

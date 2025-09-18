@@ -6,24 +6,37 @@ import { Card, CardContent, CardHeader, CardTitle } from "../components/card";
 import { BookOpen, Brain, Book, Lightbulb, HeartHandshake, School } from 'lucide-react';
 
 const DyslexiaInfo = () => {
+  // Check if user is a parent to apply normal font styling
+  const user = localStorage.getItem('user');
+  const userData = user ? JSON.parse(user) : null;
+  const isParent = userData?.role === 'parent';
+
   return (
-    <div className="min-h-screen bg-gradient-to-b from-background to-pastel-blue/30 pb-24">
+    <div className="min-h-screen bg-gradient-to-b from-background to-pastel-blue/30 pb-24" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
       <DyslexiaHeader />
       
       <main className="max-w-6xl mx-auto px-4 py-6">
         <div className="bg-pastel-purple rounded-2xl p-6 mb-8 shadow-lg animate-pop">
-          <h1 className="text-3xl font-bold mb-4">Understanding Dyslexia</h1>
-          <ReadingText size="lg">
-            Dyslexia is a learning difference that affects how people read, write, and spell. 
-            It's not related to intelligence - many dyslexic people are very smart and creative! 
-            Let's learn more about dyslexia and how we can make reading easier.
-          </ReadingText>
+          <h1 className="text-3xl font-bold mb-4" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>Understanding Dyslexia</h1>
+          {isParent ? (
+            <p className="text-lg mb-4" style={{ fontFamily: 'Arial, sans-serif' }}>
+              Dyslexia is a learning difference that affects how people read, write, and spell. 
+              It's not related to intelligence - many dyslexic people are very smart and creative! 
+              Let's learn more about dyslexia and how we can make reading easier.
+            </p>
+          ) : (
+            <ReadingText size="lg">
+              Dyslexia is a learning difference that affects how people read, write, and spell. 
+              It's not related to intelligence - many dyslexic people are very smart and creative! 
+              Let's learn more about dyslexia and how we can make reading easier.
+            </ReadingText>
+          )}
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <Card className="bg-pastel-yellow border-amber-200 shadow-lg">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
+              <CardTitle className="flex items-center gap-2" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
                 <Brain className="h-6 w-6" />
                 What is Dyslexia?
               </CardTitle>

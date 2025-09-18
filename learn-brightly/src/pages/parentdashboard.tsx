@@ -169,19 +169,13 @@ const ParentDashboard: React.FC = () => {
       <div className="container mx-auto px-4 py-8">
         {/* Welcome Section */}
         <div className="bg-white rounded-2xl shadow-lg p-6 mb-8">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-[#444] mb-2" style={{ fontFamily: 'Arial, sans-serif' }}>
-                Welcome back, {parentData.username}! 👋
-              </h1>
-              <p className="text-[#666] text-lg" style={{ fontFamily: 'Arial, sans-serif' }}>
-                Monitor your children's learning progress and achievements
-              </p>
-            </div>
-            <Button onClick={handleLogout} variant="outline" className="flex items-center gap-2" style={{ fontFamily: 'Arial, sans-serif' }}>
-              <LogOut className="w-4 h-4" />
-              Logout
-            </Button>
+          <div>
+            <h1 className="text-3xl font-bold text-[#444] mb-2" style={{ fontFamily: 'Arial, sans-serif' }}>
+              Welcome back, {parentData.username}! 👋
+            </h1>
+            <p className="text-[#666] text-lg" style={{ fontFamily: 'Arial, sans-serif' }}>
+              Monitor your children's learning progress and achievements
+            </p>
           </div>
         </div>
 
