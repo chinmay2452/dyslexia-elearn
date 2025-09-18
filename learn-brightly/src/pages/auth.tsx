@@ -4,6 +4,7 @@ import { Input } from "../components/input";
 import { Button } from "../components/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/tabs";
 import { useNavigate, useSearchParams } from "react-router-dom";
+import { useToast } from "../hooks/use-toast";
 import logo from "../assets/learn-bright-logo.svg";
 
 const AuthPage: React.FC = () => {
@@ -15,6 +16,7 @@ const AuthPage: React.FC = () => {
   const [showLoginPassword, setShowLoginPassword] = useState(false);
   const [showSignupPassword, setShowSignupPassword] = useState(false);
   const [userType, setUserType] = useState<"parent" | "student">("student");
+  const { toast } = useToast();
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
 
@@ -94,9 +96,16 @@ const AuthPage: React.FC = () => {
       
       if (!res.ok) throw new Error(data.error || "Signup failed");
 
+      // Auto-login after successful signup
+      setError("");
       localStorage.setItem("token", data.token);
       localStorage.setItem("user", JSON.stringify(data.user));
       
+      toast({
+        title: "Registration successful!",
+        description: data.message || "You are now logged in.",
+      });
+
       // Redirect based on user type
       if (userType === "parent") {
         navigate("/parentdashboard");
@@ -120,7 +129,10 @@ const AuthPage: React.FC = () => {
       const res = await fetch("http://localhost:5000/api/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(loginData)
+        body: JSON.stringify({
+          ...loginData,
+          userType: userType // Include the selected user type
+        })
       });
 
       const data = await res.json();
@@ -187,8 +199,12 @@ const AuthPage: React.FC = () => {
           <Card className="mt-4 shadow-md bg-[#FFF1EB]">
             <CardContent className="p-6 space-y-4">
               <form onSubmit={handleLogin}>
-                <h2 className="text-xl font-semibold text-[#444]">Welcome Back!</h2>
-                <br />
+                <div className="text-center mb-4">
+                  <h2 className="text-xl font-semibold text-[#444]">Welcome Back!</h2>
+                  <p className="text-sm text-[#666] mt-1">
+                    {userType === "student" ? "Student Login" : "Parent/Guardian Login"}
+                  </p>
+                </div>
                 <Input type="email" value={loginData.email} onChange={(e) => setLoginData({ ...loginData, email: e.target.value })} placeholder="Email" className="rounded-xl text-black" required />
                 <br />
                 <Input type={showLoginPassword ? "text" : "password"} value={loginData.password} onChange={(e) => setLoginData({ ...loginData, password: e.target.value })} placeholder="Password" className="rounded-xl text-black" required />

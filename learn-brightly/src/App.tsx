@@ -18,6 +18,7 @@ import WordBubbles from './pages/WordBubbles'
 import HelpSupport from './pages/HelpSupport'
 import VideoSection from './components/VideoSection'
 import UserTypePage from './pages/usertype'
+import VerifyEmail from './pages/VerifyEmail'
 
 function App() {
   return (
@@ -26,6 +27,7 @@ function App() {
         <Routes>
           <Route path="/" element={<UserTypePage />} />
           <Route path="/auth" element={<AuthPage />} />
+          <Route path="/verify-email" element={<VerifyEmail />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/parentdashboard" element={<ParentDashboard />} />
           <Route path="/reading" element={<Reading />} />

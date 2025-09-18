@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Settings, Volume2, VolumeX, LogOut, User, Bell, Moon, Sun, HelpCircle } from 'lucide-react';
-import IconButton from './IconButton';
-import TextStyleSettings from './TextStyleSettings';
+import { BookOpen, Settings, LogOut, User, Bell, Moon, Sun, HelpCircle } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useToast } from '../hooks/use-toast';
 import {
@@ -17,7 +15,7 @@ import { Switch } from './switch';
 import { Label } from './label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
 
-const DyslexiaHeader = () => {
+const ParentHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
@@ -102,17 +100,13 @@ const DyslexiaHeader = () => {
       <div className="max-w-6xl mx-auto flex justify-between items-center">
         <div className="flex items-center gap-3">
           <BookOpen className="h-10 w-10 text-primary animate-float" />
-          <h1 className="text-2xl sm:text-3xl font-bold tracking-wide">Learn Brightly</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold tracking-wide" style={{ fontFamily: 'Arial, sans-serif' }}>
+            Learn Brightly
+          </h1>
         </div>
         
         <div className="flex items-center gap-2">
-          <button 
-            className="p-2 rounded-full bg-pastel-yellow hover:bg-amber-200 transition-colors"
-            title="Read page aloud"
-          >
-            <Volume2 className="h-6 w-6" />
-          </button>
-          <TextStyleSettings />
+          {/* Removed text-to-speech button and text styling button for parent dashboard */}
           <Link 
             to="/profile"
             className="p-2 rounded-full bg-pastel-green hover:bg-green-200 transition-colors"
@@ -128,19 +122,19 @@ const DyslexiaHeader = () => {
             </SheetTrigger>
             <SheetContent className="w-[400px] sm:w-[540px]">
               <SheetHeader>
-                <SheetTitle className="text-2xl flex items-center gap-2">
+                <SheetTitle className="text-2xl flex items-center gap-2" style={{ fontFamily: 'Arial, sans-serif' }}>
                   <Settings className="h-6 w-6" />
                   Settings
                 </SheetTitle>
-                <SheetDescription>
+                <SheetDescription style={{ fontFamily: 'Arial, sans-serif' }}>
                   Customize your learning experience
                 </SheetDescription>
               </SheetHeader>
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
                 <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="general">General</TabsTrigger>
-                  <TabsTrigger value="help">Help</TabsTrigger>
+                  <TabsTrigger value="general" style={{ fontFamily: 'Arial, sans-serif' }}>General</TabsTrigger>
+                  <TabsTrigger value="help" style={{ fontFamily: 'Arial, sans-serif' }}>Help</TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="general" className="space-y-6 mt-6">
@@ -148,7 +142,7 @@ const DyslexiaHeader = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         {isDarkMode ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
-                        <Label htmlFor="dark-mode">Dark Mode</Label>
+                        <Label htmlFor="dark-mode" style={{ fontFamily: 'Arial, sans-serif' }}>Dark Mode</Label>
                       </div>
                       <Switch
                         id="dark-mode"
@@ -160,7 +154,7 @@ const DyslexiaHeader = () => {
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Bell className="h-5 w-5" />
-                        <Label htmlFor="notifications">Notifications</Label>
+                        <Label htmlFor="notifications" style={{ fontFamily: 'Arial, sans-serif' }}>Notifications</Label>
                       </div>
                       <Switch
                         id="notifications"
@@ -177,6 +171,7 @@ const DyslexiaHeader = () => {
                       variant="outline"
                       className="w-full flex items-center justify-between"
                       onClick={() => navigate('/help-support')}
+                      style={{ fontFamily: 'Arial, sans-serif' }}
                     >
                       <div className="flex items-center gap-2">
                         <HelpCircle className="h-5 w-5" />
@@ -193,6 +188,7 @@ const DyslexiaHeader = () => {
                   variant="outline"
                   className="w-full flex items-center justify-between text-red-500 hover:text-red-600 hover:bg-red-50"
                   onClick={handleLogout}
+                  style={{ fontFamily: 'Arial, sans-serif' }}
                 >
                   <div className="flex items-center gap-2">
                     <LogOut className="h-5 w-5" />
@@ -215,4 +211,4 @@ const DyslexiaHeader = () => {
   );
 };
 
-export default DyslexiaHeader;
+export default ParentHeader;

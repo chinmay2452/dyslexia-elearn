@@ -1,9 +1,16 @@
-const { MongoClient } = require("mongodb");
-require("dotenv").config({ path: "./config.env" });
+import { MongoClient } from "mongodb";
+import dotenv from "dotenv";
 
-async function main() {
-    const Db = process.env.ATLAS_URI;
-    const client = new MongoClient(Db);
+dotenv.config({ path: "./config.env" });
+
+async function main(): Promise<void> {
+    const Db: string | undefined = process.env.ATLAS_URI;
+    if (!Db) {
+        console.error("ATLAS_URI not found in environment variables");
+        return;
+    }
+    
+    const client: MongoClient = new MongoClient(Db);
 
     try {
         await client.connect();

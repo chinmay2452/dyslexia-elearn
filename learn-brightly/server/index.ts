@@ -1,6 +1,6 @@
-import express from 'express';
+import express, { Application } from 'express';
 import cors from 'cors';
-import { MongoClient } from 'mongodb';
+import { MongoClient, Db } from 'mongodb';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
 import path from 'path';
@@ -14,25 +14,37 @@ const __dirname = path.dirname(__filename);
 dotenv.config({ path: path.join(__dirname, './config.env') });
 
 // Validate required environment variables
-const requiredEnvVars = ['ATLAS_URI', 'JWT_SECRET'];
-const missingEnvVars = requiredEnvVars.filter(envVar => !process.env[envVar]);
+const requiredEnvVars: string[] = ['ATLAS_URI', 'JWT_SECRET'];
+const missingEnvVars: string[] = requiredEnvVars.filter(envVar => !process.env[envVar]);
 
 if (missingEnvVars.length > 0) {
     console.error('Missing required environment variables:', missingEnvVars.join(', '));
     process.exit(1);
 }
 
-const app = express();
-const port = process.env.PORT || 5000;
+const app: Application = express();
+const port: number = parseInt(process.env.PORT || '5000', 10);
 
 // Middleware
 app.use(cors());
 app.use(express.json());
 
 // MongoDB connection
-const client = new MongoClient(process.env.ATLAS_URI);
+const client: MongoClient = new MongoClient(process.env.ATLAS_URI as string);
 
-async function startServer() {
+interface AppLocals {
+  db: Db;
+}
+
+declare global {
+  namespace Express {
+    interface Application {
+      locals: AppLocals;
+    }
+  }
+}
+
+async function startServer(): Promise<void> {
     try {
         console.log('Attempting to connect to MongoDB...');
         console.log('Connection string:', process.env.ATLAS_URI ? 'Present' : 'Missing');
@@ -41,13 +53,13 @@ async function startServer() {
         console.log('Connected to MongoDB successfully');
 
         // Store database connection in app.locals
-        const db = client.db('learn-brightly');
+        const db: Db = client.db('learn-brightly');
         app.locals.db = db;
         console.log('Database connection stored in app.locals');
 
         // Ensure Users collection exists
         const collections = await db.listCollections().toArray();
-        const collectionNames = collections.map(c => c.name);
+        const collectionNames: string[] = collections.map(c => c.name);
         console.log('Available collections:', collectionNames);
 
         if (!collectionNames.includes('Users')) {
@@ -88,4 +100,4 @@ process.on('SIGINT', async () => {
     }
 });
 
-startServer(); 
+startServer();

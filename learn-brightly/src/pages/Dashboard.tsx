@@ -23,19 +23,34 @@ const Index = () => {
   const { toast } = useToast();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    // Clear local storage
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
-    
-    // Show success message
-    toast({
-      title: "Logged out successfully",
-      description: "You have been logged out of your account.",
-    });
-    
-    // Redirect to login page
-    navigate('/');
+  const handleLogout = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      
+      // Call logout endpoint on server
+      if (token) {
+        await fetch('http://localhost:5000/api/auth/logout', {
+          method: 'POST',
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Logout error:', error);
+    } finally {
+      // Always clear local storage and redirect
+      localStorage.removeItem('token');
+      localStorage.removeItem('user');
+      
+      toast({
+        title: "Logged out successfully",
+        description: "You have been logged out of your account.",
+      });
+      
+      navigate('/');
+    }
   };
 
   useEffect(() => {
