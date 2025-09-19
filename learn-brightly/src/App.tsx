@@ -19,6 +19,7 @@ import HelpSupport from './pages/HelpSupport'
 import VideoSection from './components/VideoSection'
 import UserTypePage from './pages/usertype'
 import VerifyEmail from './pages/VerifyEmail'
+import Writing from './pages/WritingSection'
 
 function App() {
   return (
@@ -31,6 +32,7 @@ function App() {
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/parentdashboard" element={<ParentDashboard />} />
           <Route path="/reading" element={<Reading />} />
+          <Route path="/writing" element={<Writing />} />
           <Route path="/games" element={<Games />} />
           <Route path="/games/word-match" element={<WordMatch />} />
           <Route path="/games/spelling-hero" element={<SpellingHero />} />
