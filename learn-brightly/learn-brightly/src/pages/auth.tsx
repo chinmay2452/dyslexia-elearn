@@ -6,6 +6,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "../components/tabs";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useToast } from "../hooks/use-toast";
 import logo from "../assets/learn-bright-logo.svg";
+import supabase from "../../supabase";
 
 const AuthPage: React.FC = () => {
   const navigate = useNavigate();
@@ -20,23 +21,29 @@ const AuthPage: React.FC = () => {
 
   const [loginData, setLoginData] = useState({ email: "", password: "" });
 
-  const [signupData, setSignupData] = useState({
+  interface SignupData {
+    fullName: string;
+    email: string;
+    password: string;
+    age: number | null;
+    guardianName: string;
+    dyslexiaScore: number | null;
+  }
+
+  const [signupData, setSignupData] = useState<SignupData>({
     fullName: "",
     email: "",
     password: "",
-    age: "",
-    guardianName: ""
+    age: null,
+    guardianName: "",
+    dyslexiaScore: null,
   });
 
-  // Get user type from URL query parameter
+  // Get user type from URL (example: ?userType=parent)
   useEffect(() => {
     const urlUserType = searchParams.get("userType");
-    console.log('URL userType parameter:', urlUserType);
     if (urlUserType === "parent" || urlUserType === "student") {
       setUserType(urlUserType);
-      console.log('Setting userType to:', urlUserType);
-    } else {
-      console.log('Invalid or missing userType in URL, defaulting to student');
     }
   }, [searchParams]);
 
@@ -45,75 +52,60 @@ const AuthPage: React.FC = () => {
     setIsLoading(true);
     setError("");
 
-    console.log('Signup attempt with userType:', userType);
-    console.log('Signup data:', signupData);
-
-    // Validate required fields based on user type
-    if (userType === "student") {
-      if (!signupData.fullName || !signupData.email || !signupData.password || !signupData.age || !signupData.guardianName) {
-        setError("Please fill in all required fields for student registration");
-        setIsLoading(false);
-        return;
-      }
-    } else if (userType === "parent") {
-      if (!signupData.fullName || !signupData.email || !signupData.password) {
-        setError("Please fill in all required fields for parent registration");
-        setIsLoading(false);
-        return;
-      }
-    } else {
-      setError("Invalid user type selected");
-      setIsLoading(false);
-      return;
-    }
-
     try {
-      const signupPayload = {
-        username: signupData.fullName,
+      // Validate required fields
+      if (!signupData.fullName || !signupData.email || !signupData.password) {
+        throw new Error("Please fill all required fields.");
+      }
+      if (
+        userType === "student" &&
+        (!signupData.age || !signupData.guardianName)
+      ) {
+        throw new Error("Please fill age and guardian name for student.");
+      }
+
+      // Supabase Auth signup
+      const { data: authData, error: authError } = await supabase.auth.signUp({
         email: signupData.email,
         password: signupData.password,
-        role: userType
+      });
+      if (authError) throw new Error(authError.message);
+
+      // Prepare insert data for 'users' table
+      const userInsert = {
+        id: authData.user?.id,
+        full_name: signupData.fullName,
+        email: signupData.email,
+        role: userType,
+        age: signupData.age ?? null,
+        guardian_name: signupData.guardianName || null,
+        dyslexia_score: signupData.dyslexiaScore ?? null,
       };
 
-      // Only add student-specific fields if user is a student
-      if (userType === "student") {
-        Object.assign(signupPayload, {
-          age: signupData.age,
-          guardianName: signupData.guardianName
-        });
-      }
+      const { error: insertError } = await supabase
+        .from("users")
+        .insert([userInsert]);
+      if (insertError) throw new Error(insertError.message);
 
-      console.log('Sending signup payload:', signupPayload);
+      // Store local data
+      localStorage.setItem(
+        "user",
+        JSON.stringify({
+          id: authData.user?.id,
+          email: signupData.email,
+          fullName: signupData.fullName,
+          role: userType,
+        })
+      );
 
-      const res = await fetch("http://localhost:5000/api/auth/signup", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(signupPayload)
-      });
-
-      const data = await res.json();
-      console.log('Signup response:', data);
-      
-      if (!res.ok) throw new Error(data.error || "Signup failed");
-
-      // Auto-login after successful signup
-      setError("");
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
-      
       toast({
         title: "Registration successful!",
-        description: data.message || "You are now logged in.",
+        description: "You are now logged in.",
       });
 
-      // Redirect based on user type
-      if (userType === "parent") {
-        navigate("/parentdashboard");
-      } else {
-        navigate("/dyslexia-test");
-      }
+      // Navigate user
+      navigate(userType === "parent" ? "/parentdashboard" : "/dyslexia-test");
     } catch (err: any) {
-      console.error('Signup error:', err);
       setError(err.message);
     } finally {
       setIsLoading(false);
@@ -126,50 +118,31 @@ const AuthPage: React.FC = () => {
     setError("");
 
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          ...loginData,
-          userType: userType // Include the selected user type
-        })
-      });
+      const { data: authData, error: authError } =
+        await supabase.auth.signInWithPassword({
+          email: loginData.email,
+          password: loginData.password,
+        });
+      if (authError) throw new Error(authError.message);
 
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Login failed");
+      const { data: userData, error: userError } = await supabase
+        .from("users")
+        .select("*")
+        .eq("email", loginData.email)
+        .single();
+      if (userError) throw new Error("User profile not found");
 
-      // Store token and user data
-      localStorage.setItem("token", data.token);
-      localStorage.setItem("user", JSON.stringify(data.user));
+      localStorage.setItem("user", JSON.stringify(userData));
 
-      // Check if user is a parent
-      if (data.user.role === "parent") {
+      if (userData.role === "parent") {
         navigate("/parentdashboard");
-        return;
+      } else if (userData.dyslexia_score !== null) {
+        navigate("/dashboard");
+      } else {
+        navigate("/dyslexia-test");
       }
-
-      // For students, check if they have already taken the test
-      const scoreRes = await fetch("http://localhost:5000/api/auth/dyslexia-score", {
-        headers: {
-          'Authorization': `Bearer ${data.token}`
-        }
-      });
-
-      if (scoreRes.ok) {
-        const scoreData = await scoreRes.json();
-        if (scoreData.score !== null) {
-          // User has already taken the test, redirect to dashboard
-          navigate("/dashboard");
-          return;
-        }
-      }
-
-      // User hasn't taken the test yet, redirect to test
-      navigate("/dyslexia-test");
     } catch (err: any) {
       setError(err.message);
-      // Clear any existing token/user data on error
-      localStorage.removeItem("token");
       localStorage.removeItem("user");
     } finally {
       setIsLoading(false);
@@ -179,7 +152,11 @@ const AuthPage: React.FC = () => {
   return (
     <div className="min-h-screen bg-[#FFF9F2] flex flex-col items-center justify-center px-4">
       <div className="w-full max-w-md mb-8">
-        <img src={logo} alt="Learn Bright Logo" className="w-full max-w-[300px] mx-auto" />
+        <img
+          src={logo}
+          alt="Learn Bright Logo"
+          className="w-full max-w-[300px] mx-auto"
+        />
       </div>
 
       {error && (
@@ -190,8 +167,18 @@ const AuthPage: React.FC = () => {
 
       <Tabs value={tab} onValueChange={setTab} className="w-full max-w-md">
         <TabsList className="grid w-full grid-cols-2 rounded-xl bg-[#ECECEC]">
-          <TabsTrigger value="login" className="rounded-xl data-[state=active]:bg-[#A38BFE] data-[state=active]:text-white">Login</TabsTrigger>
-          <TabsTrigger value="signup" className="rounded-xl data-[state=active]:bg-[#A38BFE] data-[state=active]:text-white">Sign Up</TabsTrigger>
+          <TabsTrigger
+            value="login"
+            className="rounded-xl data-[state=active]:bg-[#A38BFE] data-[state=active]:text-white"
+          >
+            Login
+          </TabsTrigger>
+          <TabsTrigger
+            value="signup"
+            className="rounded-xl data-[state=active]:bg-[#A38BFE] data-[state=active]:text-white"
+          >
+            Sign Up
+          </TabsTrigger>
         </TabsList>
 
         {/* LOGIN */}
@@ -200,15 +187,42 @@ const AuthPage: React.FC = () => {
             <CardContent className="p-6 space-y-4">
               <form onSubmit={handleLogin}>
                 <div className="text-center mb-4">
-                  <h2 className="text-xl font-semibold text-[#444]">Welcome Back!</h2>
+                  <h2 className="text-xl font-semibold text-[#444]">
+                    Welcome Back!
+                  </h2>
                   <p className="text-sm text-[#666] mt-1">
-                    {userType === "student" ? "Student Login" : "Parent/Guardian Login"}
+                    {userType === "student"
+                      ? "Student Login"
+                      : "Parent/Guardian Login"}
                   </p>
                 </div>
-                <Input type="email" value={loginData.email} onChange={(e) => setLoginData({ ...loginData, email: e.target.value })} placeholder="Email" className="rounded-xl text-black" required />
-                <br />
-                <Input type={showLoginPassword ? "text" : "password"} value={loginData.password} onChange={(e) => setLoginData({ ...loginData, password: e.target.value })} placeholder="Password" className="rounded-xl text-black" required />
-                <Button type="submit" className="w-full mt-4" disabled={isLoading}>{isLoading ? "Logging in..." : "Login"}</Button>
+                <Input
+                  type="email"
+                  value={loginData.email}
+                  onChange={(e) =>
+                    setLoginData({ ...loginData, email: e.target.value })
+                  }
+                  placeholder="Email"
+                  className="rounded-xl text-black"
+                  required
+                />
+                <Input
+                  type={showLoginPassword ? "text" : "password"}
+                  value={loginData.password}
+                  onChange={(e) =>
+                    setLoginData({ ...loginData, password: e.target.value })
+                  }
+                  placeholder="Password"
+                  className="rounded-xl text-black mt-3"
+                  required
+                />
+                <Button
+                  type="submit"
+                  className="w-full mt-4"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Logging in..." : "Login"}
+                </Button>
               </form>
             </CardContent>
           </Card>
@@ -220,63 +234,81 @@ const AuthPage: React.FC = () => {
             <CardContent className="p-6 space-y-4">
               <form onSubmit={handleSignup}>
                 <div className="text-center mb-4">
-                  <h2 className="text-xl font-semibold text-[#444]">Create an Account</h2>
+                  <h2 className="text-xl font-semibold text-[#444]">
+                    Create an Account
+                  </h2>
                   <p className="text-sm text-[#666] mt-1">
-                    {userType === "student" ? "Student Registration" : "Parent/Guardian Registration"}
+                    {userType === "student"
+                      ? "Student Registration"
+                      : "Parent Registration"}
                   </p>
                 </div>
-                
-                <Input 
-                  type="text" 
-                  value={signupData.fullName} 
-                  onChange={(e) => setSignupData({ ...signupData, fullName: e.target.value })} 
-                  placeholder={userType === "student" ? "Student Full Name" : "Full Name"} 
-                  className="rounded-xl text-black" 
-                  required 
-                /> 
-                <br />
-                <Input 
-                  type="email" 
-                  value={signupData.email} 
-                  onChange={(e) => setSignupData({ ...signupData, email: e.target.value })} 
-                  placeholder="Email" 
-                  className="rounded-xl text-black" 
-                  required 
-                /> 
-                <br />
-                
+
+                <Input
+                  type="text"
+                  value={signupData.fullName}
+                  onChange={(e) =>
+                    setSignupData({ ...signupData, fullName: e.target.value })
+                  }
+                  placeholder="Full Name"
+                  className="rounded-xl text-black"
+                  required
+                />
+                <Input
+                  type="email"
+                  value={signupData.email}
+                  onChange={(e) =>
+                    setSignupData({ ...signupData, email: e.target.value })
+                  }
+                  placeholder="Email"
+                  className="rounded-xl text-black mt-3"
+                  required
+                />
+
                 {userType === "student" && (
                   <>
-                    <Input 
-                      type="text" 
-                      value={signupData.age} 
-                      onChange={(e) => setSignupData({ ...signupData, age: e.target.value })} 
-                      placeholder="Age" 
-                      className="rounded-xl text-black" 
-                      required 
-                    /> 
-                    <br />
-                    <Input 
-                      type="text" 
-                      value={signupData.guardianName} 
-                      onChange={(e) => setSignupData({ ...signupData, guardianName: e.target.value })} 
-                      placeholder="Guardian Name" 
-                      className="rounded-xl text-black" 
-                      required 
-                    /> 
-                    <br />
+                    <Input
+                      type="number"
+                      value={signupData.age ?? ""}
+                      onChange={(e) =>
+                        setSignupData({
+                          ...signupData,
+                          age: e.target.value ? Number(e.target.value) : null,
+                        })
+                      }
+                      placeholder="Age"
+                      className="rounded-xl text-black mt-3"
+                    />
+                    <Input
+                      type="text"
+                      value={signupData.guardianName}
+                      onChange={(e) =>
+                        setSignupData({
+                          ...signupData,
+                          guardianName: e.target.value,
+                        })
+                      }
+                      placeholder="Guardian Name"
+                      className="rounded-xl text-black mt-3"
+                    />
                   </>
                 )}
-                
-                <Input 
-                  type={showSignupPassword ? "text" : "password"} 
-                  value={signupData.password} 
-                  onChange={(e) => setSignupData({ ...signupData, password: e.target.value })} 
-                  placeholder="Password" 
-                  className="rounded-xl text-black" 
-                  required 
+
+                <Input
+                  type={showSignupPassword ? "text" : "password"}
+                  value={signupData.password}
+                  onChange={(e) =>
+                    setSignupData({ ...signupData, password: e.target.value })
+                  }
+                  placeholder="Password"
+                  className="rounded-xl text-black mt-3"
+                  required
                 />
-                <Button type="submit" className="w-full mt-4" disabled={isLoading}>
+                <Button
+                  type="submit"
+                  className="w-full mt-4"
+                  disabled={isLoading}
+                >
                   {isLoading ? "Signing up..." : "Sign Up"}
                 </Button>
               </form>

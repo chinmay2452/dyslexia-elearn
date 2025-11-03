@@ -1,110 +1,102 @@
 import React, { useState, useEffect } from 'react';
-import { BookOpen, Settings, Volume2, VolumeX, LogOut, User, Bell, Moon, Sun, HelpCircle } from 'lucide-react';
-import IconButton from './IconButton';
-import TextStyleSettings from './TextStyleSettings';
+import { BookOpen, Settings, Volume2, LogOut, User, Bell, Moon, Sun, HelpCircle } from 'lucide-react';
 import { useNavigate, useLocation, Link } from 'react-router-dom';
 import { useToast } from '../hooks/use-toast';
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger
-} from "./sheet";
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "./sheet";
 import { Button } from './button';
 import { Switch } from './switch';
 import { Label } from './label';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "./tabs";
+import TextStyleSettings from './TextStyleSettings';
+import { supabase } from '../../integrations/supabase/client'; // ✅ Import Supabase client
 
 const DyslexiaHeader = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { toast } = useToast();
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    const savedMode = localStorage.getItem('darkMode');
-    return savedMode === 'true';
-  });
+
+  const [isDarkMode, setIsDarkMode] = useState(() => localStorage.getItem('darkMode') === 'true');
   const [notificationsEnabled, setNotificationsEnabled] = useState(true);
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // Apply dark mode on mount and when it changes
+  // ✅ Check auth state on mount
   useEffect(() => {
-    if (isDarkMode) {
-      document.documentElement.classList.add('dark');
-    } else {
-      document.documentElement.classList.remove('dark');
+    const checkAuth = async () => {
+      const { data } = await supabase.auth.getSession();
+      setIsAuthenticated(!!data.session);
+    };
+    checkAuth();
+
+    const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthenticated(!!session);
+    });
+
+    return () => {
+      listener.subscription.unsubscribe();
+    };
+  }, []);
+
+  // ✅ Redirect unauthenticated users safely
+  useEffect(() => {
+    if (!isAuthenticated && location.pathname !== '/') {
+      navigate('/');
     }
+  }, [isAuthenticated, location.pathname, navigate]);
+
+  // ✅ Apply dark mode
+  useEffect(() => {
+    document.documentElement.classList.toggle('dark', isDarkMode);
     localStorage.setItem('darkMode', isDarkMode.toString());
   }, [isDarkMode]);
 
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-  };
+  const toggleDarkMode = () => setIsDarkMode(!isDarkMode);
 
   const toggleNotifications = () => {
-    setNotificationsEnabled(!notificationsEnabled);
-    toast({
-      title: notificationsEnabled ? "Notifications disabled" : "Notifications enabled",
-      description: notificationsEnabled ? "You won't receive notifications" : "You will receive notifications",
-    });
+    const newState = !notificationsEnabled;
+    setNotificationsEnabled(newState);
+    setTimeout(() => {
+      toast({
+        title: newState ? "Notifications enabled" : "Notifications disabled",
+        description: newState
+          ? "You will receive notifications."
+          : "You won't receive notifications.",
+      });
+    }, 0);
   };
 
   const handleLogout = async () => {
     try {
-      const token = localStorage.getItem('token');
-      
-      // Call logout endpoint on server
-      if (token) {
-        await fetch('http://localhost:5000/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      // Always clear local storage and redirect
-      localStorage.removeItem('token');
+      await supabase.auth.signOut();
       localStorage.removeItem('user');
       navigate('/');
       toast({
         title: "Logged out successfully",
         description: "You have been logged out of your account.",
       });
+    } catch (error) {
+      console.error('Logout error:', error);
+      toast({
+        title: "Logout failed",
+        description: "Something went wrong during logout.",
+      });
     }
   };
 
-  // Check if user is authenticated
-  const isAuthenticated = () => {
-    const token = localStorage.getItem('token');
-    const user = localStorage.getItem('user');
-    return token && user;
-  };
-
-  // Don't show header on auth page
-  if (location.pathname === '/') {
-    return null;
-  }
-
-  // If not authenticated, redirect to login
-  if (!isAuthenticated()) {
-    navigate('/');
-    return null;
-  }
+  // ✅ Hide header on login/signup page
+  if (location.pathname === '/') return null;
 
   return (
     <header className="bg-pastel-blue py-4 px-6 rounded-b-2xl shadow-md">
       <div className="max-w-6xl mx-auto flex justify-between items-center">
+        {/* Logo + Title */}
         <div className="flex items-center gap-3">
           <BookOpen className="h-10 w-10 text-primary animate-float" />
           <h1 className="text-2xl sm:text-3xl font-bold tracking-wide">Learn Brightly</h1>
         </div>
-        
+
+        {/* Action Buttons */}
         <div className="flex items-center gap-2">
           <button 
             className="p-2 rounded-full bg-pastel-yellow hover:bg-amber-200 transition-colors"
@@ -112,7 +104,9 @@ const DyslexiaHeader = () => {
           >
             <Volume2 className="h-6 w-6" />
           </button>
+
           <TextStyleSettings />
+
           <Link 
             to="/profile"
             className="p-2 rounded-full bg-pastel-green hover:bg-green-200 transition-colors"
@@ -120,6 +114,8 @@ const DyslexiaHeader = () => {
           >
             <User className="h-6 w-6" />
           </Link>
+
+          {/* Settings */}
           <Sheet open={isSettingsOpen} onOpenChange={setIsSettingsOpen}>
             <SheetTrigger asChild>
               <button className="p-2 rounded-full bg-pastel-purple hover:bg-purple-200 transition-colors">
@@ -132,9 +128,7 @@ const DyslexiaHeader = () => {
                   <Settings className="h-6 w-6" />
                   Settings
                 </SheetTitle>
-                <SheetDescription>
-                  Customize your learning experience
-                </SheetDescription>
+                <SheetDescription>Customize your learning experience</SheetDescription>
               </SheetHeader>
 
               <Tabs value={activeTab} onValueChange={setActiveTab} className="mt-6">
@@ -143,6 +137,7 @@ const DyslexiaHeader = () => {
                   <TabsTrigger value="help">Help</TabsTrigger>
                 </TabsList>
 
+                {/* General Settings */}
                 <TabsContent value="general" className="space-y-6 mt-6">
                   <div className="space-y-4">
                     <div className="flex items-center justify-between">
@@ -150,11 +145,7 @@ const DyslexiaHeader = () => {
                         {isDarkMode ? <Moon className="h-5 w-5" /> : <Sun className="h-5 w-5" />}
                         <Label htmlFor="dark-mode">Dark Mode</Label>
                       </div>
-                      <Switch
-                        id="dark-mode"
-                        checked={isDarkMode}
-                        onCheckedChange={toggleDarkMode}
-                      />
+                      <Switch id="dark-mode" checked={isDarkMode} onCheckedChange={toggleDarkMode} />
                     </div>
 
                     <div className="flex items-center justify-between">
@@ -162,15 +153,12 @@ const DyslexiaHeader = () => {
                         <Bell className="h-5 w-5" />
                         <Label htmlFor="notifications">Notifications</Label>
                       </div>
-                      <Switch
-                        id="notifications"
-                        checked={notificationsEnabled}
-                        onCheckedChange={toggleNotifications}
-                      />
+                      <Switch id="notifications" checked={notificationsEnabled} onCheckedChange={toggleNotifications} />
                     </div>
                   </div>
                 </TabsContent>
 
+                {/* Help Settings */}
                 <TabsContent value="help" className="space-y-6 mt-6">
                   <div className="space-y-4">
                     <Button
@@ -202,6 +190,8 @@ const DyslexiaHeader = () => {
               </div>
             </SheetContent>
           </Sheet>
+
+          {/* Quick Logout */}
           <button 
             onClick={handleLogout}
             className="p-2 rounded-full bg-pastel-peach hover:bg-orange-200 transition-colors"
