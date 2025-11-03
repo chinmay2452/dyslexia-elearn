@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '../components/tabs';
 import { Button } from '../components/button';
 import { Card, CardContent } from '../components/card';
@@ -12,6 +12,7 @@ import {
   Sparkles,
   CheckCircle
 } from 'lucide-react';
+import { useToast } from '../hooks/use-toast';
 
 interface TutorialCardProps {
   icon: React.ReactNode;
@@ -44,6 +45,9 @@ const WritingSection: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [activeTab, setActiveTab] = useState("upload");
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
+  const [uploadedFiles, setUploadedFiles] = useState<{ id: string; name: string; size: number }[]>([]);
+  const API_BASE = 'http://localhost:5000/api';
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -69,25 +73,65 @@ const WritingSection: React.FC = () => {
     }
   };
 
+  // Load persisted uploads on mount
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('writing_uploads');
+      if (raw) setUploadedFiles(JSON.parse(raw));
+    } catch {}
+  }, []);
+
+  // Persist when list changes
+  useEffect(() => {
+    try {
+      localStorage.setItem('writing_uploads', JSON.stringify(uploadedFiles));
+    } catch {}
+  }, [uploadedFiles]);
+
   const handleSubmit = async () => {
     if (!selectedFile) return;
-    
+
     setIsUploading(true);
-    
-    // Simulate upload process
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    console.log('File details:', {
-      name: selectedFile.name,
-      size: selectedFile.size,
-      type: selectedFile.type,
-      lastModified: selectedFile.lastModified
-    });
-    
-    setIsUploading(false);
-    
-    // Reset form
-    handleRemoveFile();
+    try {
+      const formData = new FormData();
+      formData.append('file', selectedFile);
+
+      const response = await fetch(`${API_BASE}/upload`, {
+        method: 'POST',
+        body: formData
+      });
+
+      if (!response.ok) {
+        const err = await response.json().catch(() => ({}));
+        throw new Error(err.error || 'Upload failed');
+      }
+
+      const data = await response.json();
+      const fileId = data.fileId as string;
+      console.log('Uploaded to GridFS. File ID:', fileId);
+      toast({
+        title: 'Upload successful',
+        description: `Saved to GridFS. ID: ${fileId}`,
+      });
+
+      // Add to uploaded files gallery
+      setUploadedFiles(prev => [
+        { id: fileId, name: selectedFile.name, size: selectedFile.size },
+        ...prev
+      ]);
+
+      // Reset form
+      handleRemoveFile();
+    } catch (error: any) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Upload failed',
+        description: error?.message || 'Could not upload the file',
+        variant: 'destructive'
+      });
+    } finally {
+      setIsUploading(false);
+    }
   };
 
   const handleTutorialStart = (tutorialName: string) => {
@@ -237,6 +281,47 @@ const WritingSection: React.FC = () => {
             </CardContent>
           </Card>
         </TabsContent>
+
+        {/* Uploaded Files Gallery */}
+        {uploadedFiles.length > 0 && (
+          <div className="space-y-4">
+            <h4 className="text-xl font-bold text-gray-800">Your uploads</h4>
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+              {uploadedFiles.map((f) => (
+                <Card key={f.id} className="bg-white rounded-xl shadow-md overflow-hidden">
+                  <div className="aspect-video bg-gray-100">
+                    <img
+                      src={`${API_BASE}/file/${f.id}`}
+                      alt={f.name}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        (e.currentTarget as HTMLImageElement).style.display = 'none';
+                      }}
+                    />
+                  </div>
+                  <CardContent className="p-4">
+                    <div className="mb-3">
+                      <p className="font-semibold text-gray-800 truncate" title={f.name}>{f.name}</p>
+                      <p className="text-sm text-gray-500">{(f.size / 1024 / 1024).toFixed(2)} MB</p>
+                    </div>
+                    <div className="flex gap-2 items-center">
+                      <Button
+                        variant="outline"
+                        className="rounded-xl"
+                        onClick={() => toast({ title: 'Review coming soon', description: 'This will open the review flow.' })}
+                      >
+                        Review
+                      </Button>
+                      <a href={`${API_BASE}/file/${f.id}`} target="_blank" rel="noreferrer" className="ml-auto">
+                        <Button className="rounded-xl">View</Button>
+                      </a>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Tutorials Tab */}
         <TabsContent value="tutorials" className="space-y-6">

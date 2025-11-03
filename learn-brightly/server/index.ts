@@ -3,6 +3,7 @@ import cors from 'cors';
 import { MongoClient, Db } from 'mongodb';
 import dotenv from 'dotenv';
 import authRoutes from './routes/auth.js';
+import fileRoutes from './routes/files.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
 
@@ -76,7 +77,9 @@ async function startServer(): Promise<void> {
 
         // Routes
         app.use('/api/auth', authRoutes);
+        app.use('/api', fileRoutes);
         console.log('Auth routes mounted at /api/auth');
+        console.log('File routes mounted at /api');
 
         // Start server
         app.listen(port, () => {
