@@ -6,8 +6,8 @@ import pandas as pd
 from sklearn.model_selection import train_test_split
 import lightgbm as lgb
 
-DATA_CSV = os.environ.get("FEATURE_CSV", "../prepared_quiz_features.csv")
-MODEL_DIR = os.environ.get("MODEL_DIR", "../models")
+DATA_CSV = os.environ.get("FEATURE_CSV", os.path.join(os.path.dirname(__file__), "../prepared_quiz_features.csv"))
+MODEL_DIR = os.environ.get("MODEL_DIR", os.path.join(os.path.dirname(__file__), "../models"))
 os.makedirs(MODEL_DIR, exist_ok=True)
 
 df = pd.read_csv(DATA_CSV)
@@ -42,7 +42,14 @@ params_reg = {
     "seed": 42
 }
 
-reg_model = lgb.train(params_reg, train_data, num_boost_round=1000, valid_sets=[valid_data], early_stopping_rounds=50)
+reg_model = lgb.train(
+    params_reg,
+    train_data,
+    num_boost_round=1000,
+    valid_sets=[valid_data],
+    callbacks=[lgb.early_stopping(stopping_rounds=50)]
+)
+
 joblib.dump(reg_model, os.path.join(MODEL_DIR, "lgb_reg_quiz_score.pkl"))
 print("Saved reg model.")
 
@@ -58,7 +65,14 @@ params_cls = {
 }
 train_c = lgb.Dataset(train_df[feature_cols], label=train_df[target_cls])
 valid_c = lgb.Dataset(valid_df[feature_cols], label=valid_df[target_cls])
-cls_model = lgb.train(params_cls, train_c, num_boost_round=1000, valid_sets=[valid_c], early_stopping_rounds=50)
+cls_model = lgb.train(
+    params_cls,
+    train_c,
+    num_boost_round=1000,
+    valid_sets=[valid_c],
+    callbacks=[lgb.early_stopping(stopping_rounds=50)]
+)
+
 joblib.dump(cls_model, os.path.join(MODEL_DIR, "lgb_cls_skill_level.pkl"))
 print("Saved class model.")
 
@@ -76,14 +90,27 @@ for col in weak_cols:
         "verbosity": -1,
         "seed": 42
     }
-    m = lgb.train(p, tr, num_boost_round=500, valid_sets=[va], early_stopping_rounds=20, verbose_eval=False)
-    joblib.dump(m, os.path.join(MODEL_DIR, f"lgb_weak_{col}.pkl"))
-    weak_models[col] = os.path.join(MODEL_DIR, f"lgb_weak_{col}.pkl")
+m = lgb.train(
+    p,
+    tr,
+    num_boost_round=500,
+    valid_sets=[va],
+    callbacks=[lgb.early_stopping(stopping_rounds=20)]
+)
+
+joblib.dump(m, os.path.join(MODEL_DIR, f"lgb_weak_{col}.pkl"))
+weak_models[col] = os.path.join(MODEL_DIR, f"lgb_weak_{col}.pkl")
 
 # ------- confidence model (regression)
 train_conf = lgb.Dataset(train_df[feature_cols], label=train_df[target_conf])
 valid_conf = lgb.Dataset(valid_df[feature_cols], label=valid_df[target_conf])
-conf_model = lgb.train(params_reg, train_conf, num_boost_round=500, valid_sets=[valid_conf], early_stopping_rounds=30)
+conf_model = lgb.train(
+    params_reg, train_conf,
+    num_boost_round=500,
+    valid_sets=[valid_conf],
+    callbacks=[lgb.early_stopping(stopping_rounds=30)]
+)
+
 joblib.dump(conf_model, os.path.join(MODEL_DIR, "lgb_reg_confidence.pkl"))
 print("Saved confidence model.")
 
