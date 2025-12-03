@@ -1,0 +1,4 @@
+{
+  "feature_cols": [...],  # list of column names used as features
+  "weak_cols":    [...]   # list of weak_topic__* columns
+}
