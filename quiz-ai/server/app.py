@@ -13,7 +13,7 @@ import numpy as np
 load_dotenv()
 SUPABASE_URL = os.environ["SUPABASE_URL"]
 SUPABASE_KEY = os.environ["SUPABASE_KEY"]
-MODEL_DIR = os.environ.get("MODEL_DIR", "../models")
+MODEL_DIR = os.environ.get("MODEL_DIR", os.path.join(os.path.dirname(__file__), "../models"))
 PORT = int(os.environ.get("PORT", 8000))
 
 supabase: Client = create_client(SUPABASE_URL, SUPABASE_KEY)
