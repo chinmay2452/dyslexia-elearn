@@ -26,8 +26,10 @@ const Navigation = () => {
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (!token) return;
+    const API_BASE = import.meta.env.VITE_API_BASE as string | undefined;
+    if (!API_BASE) return;
     const controller = new AbortController();
-    fetch('http://localhost:5000/api/auth/verify', {
+    fetch(`${API_BASE}/auth/verify`, {
       headers: { 'Authorization': `Bearer ${token}` },
       signal: controller.signal
     })

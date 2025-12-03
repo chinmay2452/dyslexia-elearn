@@ -13,6 +13,7 @@ const VerifyEmail: React.FC = () => {
   const [verificationStatus, setVerificationStatus] = useState<'pending' | 'success' | 'error'>('pending');
   const [message, setMessage] = useState('');
   const [email, setEmail] = useState('');
+  const API_BASE = import.meta.env.VITE_API_BASE as string | undefined;
 
   useEffect(() => {
     const token = searchParams.get('token');
@@ -30,7 +31,13 @@ const VerifyEmail: React.FC = () => {
   const verifyEmail = async (token: string, email: string) => {
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/auth/verify-email', {
+      if (!API_BASE) {
+        setVerificationStatus('error');
+        setMessage('Server not configured');
+        setIsLoading(false);
+        return;
+      }
+      const response = await fetch(`${API_BASE}/auth/verify-email`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -64,7 +71,16 @@ const VerifyEmail: React.FC = () => {
     
     setIsLoading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/auth/resend-verification', {
+      if (!API_BASE) {
+        toast({
+          title: "Error",
+          description: "Server not configured",
+          variant: "destructive",
+        });
+        setIsLoading(false);
+        return;
+      }
+      const response = await fetch(`${API_BASE}/auth/resend-verification`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

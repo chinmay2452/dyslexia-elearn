@@ -47,7 +47,7 @@ const WritingSection: React.FC = () => {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
   const [uploadedFiles, setUploadedFiles] = useState<{ id: string; name: string; size: number }[]>([]);
-  const API_BASE = 'http://localhost:5000/api';
+  const API_BASE = import.meta.env.VITE_API_BASE as string | undefined;
 
   const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -93,6 +93,15 @@ const WritingSection: React.FC = () => {
 
     setIsUploading(true);
     try {
+      if (!API_BASE) {
+        toast({
+          title: 'Upload failed',
+          description: 'Server not configured',
+          variant: 'destructive'
+        });
+        setIsUploading(false);
+        return;
+      }
       const formData = new FormData();
       formData.append('file', selectedFile);
 
@@ -291,7 +300,7 @@ const WritingSection: React.FC = () => {
                 <Card key={f.id} className="bg-white rounded-xl shadow-md overflow-hidden">
                   <div className="aspect-video bg-gray-100">
                     <img
-                      src={`${API_BASE}/file/${f.id}`}
+                      src={API_BASE ? `${API_BASE}/file/${f.id}` : ''}
                       alt={f.name}
                       className="w-full h-full object-cover"
                       onError={(e) => {
@@ -312,7 +321,7 @@ const WritingSection: React.FC = () => {
                       >
                         Review
                       </Button>
-                      <a href={`${API_BASE}/file/${f.id}`} target="_blank" rel="noreferrer" className="ml-auto">
+                      <a href={API_BASE ? `${API_BASE}/file/${f.id}` : '#'} target="_blank" rel="noreferrer" className="ml-auto">
                         <Button className="rounded-xl">View</Button>
                       </a>
                     </div>
