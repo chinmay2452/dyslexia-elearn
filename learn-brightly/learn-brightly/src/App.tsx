@@ -20,6 +20,7 @@ import VideoSection from './components/VideoSection'
 import UserTypePage from './pages/usertype'
 import VerifyEmail from './pages/VerifyEmail'
 import Writing from './pages/WritingSection'
+import LearningResources from './pages/LearningResources'
 
 function App() {
   return (
@@ -43,6 +44,7 @@ function App() {
           <Route path="/dyslexia-test" element={<DyslexiaTest />} />
           <Route path="/help-support" element={<HelpSupport />} />
           <Route path="/video-section" element={<VideoSection />} />
+          <Route path="/resources" element={<LearningResources />} />
         </Routes>
         <ToastViewport />
         {/* Spacer to prevent overlap with fixed bottom Navigation */}

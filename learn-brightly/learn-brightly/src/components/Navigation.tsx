@@ -22,26 +22,19 @@ const Navigation = () => {
     }
   }, []);
 
-  // Verify token with server to ensure accurate role, and update on route changes
+  // Verify role from localStorage when path changes
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (!token) return;
-    const API_BASE = import.meta.env.VITE_API_BASE as string | undefined;
-    if (!API_BASE) return;
-    const controller = new AbortController();
-    fetch(`${API_BASE}/auth/verify`, {
-      headers: { 'Authorization': `Bearer ${token}` },
-      signal: controller.signal
-    })
-      .then(async (res) => {
-        if (!res.ok) return;
-        const data = await res.json();
-        if (data?.user?.role && typeof data.user.role === 'string') {
-          setUserRole(data.user.role);
+    const user = localStorage.getItem('user');
+    if (user) {
+      try {
+        const userData = JSON.parse(user);
+        if (typeof userData?.role === 'string') {
+          setUserRole(userData.role);
         }
-      })
-      .catch(() => {/* ignore */});
-    return () => controller.abort();
+      } catch (error) {
+        console.error('Error parsing user data:', error);
+      }
+    }
     // Re-run when path changes to capture role after login redirects
   }, [location.pathname]);
 
@@ -63,9 +56,8 @@ const Navigation = () => {
   
   // Check if user is authenticated and has completed the test
   const isAuthenticated = () => {
-    const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
-    return token && user;
+    return !!user;
   };
 
   // Don't show navigation on auth page, test page, or user type page

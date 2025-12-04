@@ -136,10 +136,8 @@ const AuthPage: React.FC = () => {
 
       if (userData.role === "parent") {
         navigate("/parentdashboard");
-      } else if (userData.dyslexia_score !== null) {
-        navigate("/dashboard");
       } else {
-        navigate("/dyslexia-test");
+        navigate("/dashboard");
       }
     } catch (err: any) {
       setError(err.message);

@@ -25,12 +25,13 @@ const DyslexiaHeader = () => {
   useEffect(() => {
     const checkAuth = async () => {
       const { data } = await supabase.auth.getSession();
-      setIsAuthenticated(!!data.session);
+      const storedUser = localStorage.getItem('user');
+      setIsAuthenticated(!!(data.session || storedUser));
     };
     checkAuth();
 
     const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
-      setIsAuthenticated(!!session);
+      setIsAuthenticated(!!session || !!localStorage.getItem('user'));
     });
 
     return () => {
@@ -40,7 +41,8 @@ const DyslexiaHeader = () => {
 
   // ✅ Redirect unauthenticated users safely
   useEffect(() => {
-    if (!isAuthenticated && location.pathname !== '/') {
+    const storedUser = localStorage.getItem('user');
+    if (!isAuthenticated && !storedUser && location.pathname !== '/') {
       navigate('/');
     }
   }, [isAuthenticated, location.pathname, navigate]);

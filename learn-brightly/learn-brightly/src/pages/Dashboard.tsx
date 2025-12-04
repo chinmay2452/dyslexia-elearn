@@ -28,23 +28,7 @@ const Index = () => {
 
   const handleLogout = async () => {
     try {
-      const token = localStorage.getItem('token');
-      
-      // Call logout endpoint on server
-      if (token) {
-        await fetch('http://localhost:5000/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      // Always clear local storage and redirect
-      localStorage.removeItem('token');
+      // Clear local storage
       localStorage.removeItem('user');
       
       toast({
@@ -53,85 +37,35 @@ const Index = () => {
       });
       
       navigate('/');
+    } catch (error) {
+      console.error('Logout error:', error);
+      navigate('/');
     }
   };
 
   useEffect(() => {
-    const fetchUserData = async () => {
-      try {
-        const token = localStorage.getItem('token');
-        const storedUser = localStorage.getItem('user');
-        
-        if (!token || !storedUser) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-          navigate('/');
-          return;
-        }
+    const storedUser = localStorage.getItem('user');
+    
+    if (!storedUser) {
+      navigate('/');
+      return;
+    }
 
-        // Fetch user data
-        const userResponse = await fetch('http://localhost:5000/api/auth/verify', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!userResponse.ok) {
-          if (userResponse.status === 401) {
-            // Token is invalid or expired
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            navigate('/');
-            return;
-          }
-          throw new Error('Failed to fetch user data');
-        }
-
-        const userData = await userResponse.json();
-
-        // Fetch dyslexia score
-        const scoreResponse = await fetch('http://localhost:5000/api/auth/dyslexia-score', {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!scoreResponse.ok) {
-          if (scoreResponse.status === 401) {
-            // Token is invalid or expired
-            localStorage.removeItem('token');
-            localStorage.removeItem('user');
-            navigate('/');
-            return;
-          }
-          throw new Error('Failed to fetch dyslexia score');
-        }
-
-        const scoreData = await scoreResponse.json();
-        
-        setUserData({
-          ...userData.user,
-          dyslexiaScore: scoreData.score,
-          lastTestDate: scoreData.lastTestDate
-        });
-      } catch (error) {
-        console.error('Error fetching user data:', error);
-        toast({
-          title: "Error loading user data",
-          description: "There was a problem loading your information.",
-          variant: "destructive"
-        });
-        // If there's an error, redirect to login
-        localStorage.removeItem('token');
-        localStorage.removeItem('user');
-        navigate('/');
-      }
-    };
-
-    fetchUserData();
-  }, [navigate, toast]);
+    try {
+      const user = JSON.parse(storedUser);
+      setUserData({
+        username: user.full_name || user.fullName || 'User',
+        email: user.email || '',
+        role: user.role || 'student',
+        dyslexiaScore: user.dyslexia_score,
+        lastTestDate: user.lastTestDate
+      });
+    } catch (error) {
+      console.error('Error parsing user data:', error);
+      localStorage.removeItem('user');
+      navigate('/');
+    }
+  }, [navigate]);
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-pastel-blue/30 pb-24" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>

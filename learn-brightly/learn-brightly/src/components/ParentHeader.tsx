@@ -51,37 +51,23 @@ const ParentHeader = () => {
 
   const handleLogout = async () => {
     try {
-      const token = localStorage.getItem('token');
-      
-      // Call logout endpoint on server
-      if (token) {
-        await fetch('http://localhost:5000/api/auth/logout', {
-          method: 'POST',
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-      }
-    } catch (error) {
-      console.error('Logout error:', error);
-    } finally {
-      // Always clear local storage and redirect
-      localStorage.removeItem('token');
+      // Clear local storage
       localStorage.removeItem('user');
       navigate('/');
       toast({
         title: "Logged out successfully",
         description: "You have been logged out of your account.",
       });
+    } catch (error) {
+      console.error('Logout error:', error);
+      navigate('/');
     }
   };
 
   // Check if user is authenticated
   const isAuthenticated = () => {
-    const token = localStorage.getItem('token');
     const user = localStorage.getItem('user');
-    return token && user;
+    return !!user;
   };
 
   // Don't show header on auth page
