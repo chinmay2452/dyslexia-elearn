@@ -171,7 +171,7 @@ const Reading = () => {
           .from('user_progress')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         const currentXP = currentProgress?.xp || 0;
         const currentStories = currentProgress?.stories_read || 0;

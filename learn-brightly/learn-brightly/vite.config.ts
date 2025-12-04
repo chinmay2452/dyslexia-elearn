@@ -13,36 +13,7 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      crypto: 'crypto-browserify',
-      stream: 'stream-browserify',
-      util: 'util',
-      buffer: 'buffer',
-      process: 'process/browser',
-      path: 'path-browserify',
-      fs: 'browserify-fs',
-      os: 'os-browserify/browser'
-    }
+      "@": path.resolve(__dirname, "./src"),
+    },
   },
-  define: {
-    'process.env': {},
-    global: 'globalThis'
-  },
-  optimizeDeps: {
-    esbuildOptions: {
-      define: {
-        global: 'globalThis'
-      }
-    }
-  },
-  build: {
-    rollupOptions: {
-      external: ['crypto'],
-      output: {
-        globals: {
-          crypto: 'crypto'
-        }
-      }
-    }
-  },
-  
 })

@@ -161,7 +161,7 @@ const WordMatch = () => {
           .from('user_progress')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         const currentXP = currentProgress?.xp || 0;
         const currentGames = currentProgress?.games_played || 0;

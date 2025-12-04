@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import supabase from '../../supabase';
 import DyslexiaHeader from '../components/DyslexiaHeader';
-import { User, Award, BookOpen, Settings, Bell, Puzzle, Calendar, TextCursor, AlignJustify, Type, Mail, Loader2 } from 'lucide-react';
+import { User, Award, BookOpen, Settings, Bell, Puzzle, Calendar, TextCursor, AlignJustify, Type, Mail, Loader2, Calculator, Book } from 'lucide-react';
 import { Button } from "../components/button";
 import { useNavigate } from 'react-router-dom';
 import {
@@ -604,6 +604,18 @@ function NotificationSettingsSheet({
   );
 }
 
+interface UserData {
+  username: string;
+  email: string;
+  age: string;
+  guardianName: string;
+  role: string;
+  xp?: number;
+  gamesPlayed?: number;
+  storiesRead?: number;
+  achievements?: string[];
+}
+
 const Profile = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
   const navigate = useNavigate();
@@ -628,11 +640,26 @@ const Profile = () => {
         const user = JSON.parse(storedUser);
 
         // Fetch fresh data from Supabase
-        const { data: profile, error } = await supabase
+        const { data: profile } = await supabase
           .from('users')
           .select('*')
           .eq('id', user.id)
           .single();
+
+        // Fetch progress
+        const { data: progress } = await supabase
+          .from('user_progress')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle();
+
+        // Fetch achievements
+        const { data: achievements } = await supabase
+          .from('user_achievements')
+          .select('achievement_id')
+          .eq('user_id', user.id);
+
+        const achievementIds = achievements?.map(a => a.achievement_id) || [];
 
         if (profile) {
           setUserData({
@@ -640,21 +667,29 @@ const Profile = () => {
             email: profile.email,
             age: profile.age?.toString() || '',
             guardianName: profile.guardian_name || '',
-            role: profile.role
+            role: profile.role,
+            xp: progress?.xp || 0,
+            gamesPlayed: progress?.games_played || 0,
+            storiesRead: progress?.stories_read || 0,
+            achievements: achievementIds
           });
         } else {
-          // Fallback to stored user data if fetch fails
+          // Fallback
           setUserData({
             username: user.full_name || user.fullName || '',
             email: user.email || '',
             age: user.age?.toString() || '',
             guardianName: user.guardianName || user.guardian_name || '',
-            role: user.role || 'student'
+            role: user.role || 'student',
+            xp: 0,
+            gamesPlayed: 0,
+            storiesRead: 0,
+            achievements: []
           });
         }
       } catch (error) {
         console.error('Error fetching user data:', error);
-        // Use stored data as fallback
+        // Fallback
         try {
           const user = JSON.parse(storedUser);
           setUserData({
@@ -662,7 +697,11 @@ const Profile = () => {
             email: user.email || '',
             age: user.age?.toString() || '',
             guardianName: user.guardianName || user.guardian_name || '',
-            role: user.role || 'student'
+            role: user.role || 'student',
+            xp: 0,
+            gamesPlayed: 0,
+            storiesRead: 0,
+            achievements: []
           });
         } catch (e) {
           navigate('/');
@@ -673,7 +712,13 @@ const Profile = () => {
     fetchUserData();
   }, [navigate]);
 
+  // Helper to check if achievement is unlocked
+  const isUnlocked = (id: string) => userData?.achievements?.includes(id);
 
+  // Calculate weekly progress (mock logic for now based on totals)
+  const readingTimeHours = userData ? Math.round((userData.storiesRead || 0) * 0.1 * 10) / 10 : 0; // 6 mins per story
+  const gamesProgress = userData ? Math.min((userData.gamesPlayed || 0) * 100 / 15, 100) : 0;
+  const wordsLearned = userData ? (userData.storiesRead || 0) * 5 : 0; // 5 words per story
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-pastel-purple/30 pb-24" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
@@ -688,30 +733,51 @@ const Profile = () => {
             <div className="flex-1 text-center md:text-left">
               <h1 className="text-3xl font-bold mb-2" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>{userData?.username || 'Loading...'}</h1>
               <div className="space-y-1">
-                <p className="text-lg flex items-center gap-2" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
-                  <span className="font-semibold">Age:</span>
-                  <span>{userData?.age || 'Not set'}</span>
-                </p>
-                <p className="text-lg flex items-center gap-2" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
-                  <span className="font-semibold">Guardian:</span>
-                  <span>{userData?.guardianName || 'Not set'}</span>
-                </p>
-                <p className="text-lg flex items-center gap-2" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
-                  <span className="font-semibold">Email:</span>
-                  <span>{userData?.email || 'Not set'}</span>
-                </p>
+                {isParent ? (
+                  <>
+                    <p className="text-lg flex items-center gap-2" style={{ fontFamily: 'Arial, sans-serif' }}>
+                      <span className="font-semibold">Role:</span>
+                      <span>Parent</span>
+                    </p>
+                    <p className="text-lg flex items-center gap-2" style={{ fontFamily: 'Arial, sans-serif' }}>
+                      <span className="font-semibold">Email:</span>
+                      <span>{userData?.email || 'Not set'}</span>
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-lg flex items-center gap-2">
+                      <span className="font-semibold">Age:</span>
+                      <span>{userData?.age || 'Not set'}</span>
+                    </p>
+                    <p className="text-lg flex items-center gap-2">
+                      <span className="font-semibold">Guardian:</span>
+                      <span>{userData?.guardianName || 'Not set'}</span>
+                    </p>
+                    <p className="text-lg flex items-center gap-2">
+                      <span className="font-semibold">Email:</span>
+                      <span>{userData?.email || 'Not set'}</span>
+                    </p>
+                    <p className="text-lg flex items-center gap-2">
+                      <span className="font-semibold">Total XP:</span>
+                      <span className="font-bold text-pastel-purple">{userData?.xp || 0}</span>
+                    </p>
+                  </>
+                )}
               </div>
-              <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
-                <span className="bg-pastel-yellow px-3 py-1 rounded-full text-sm font-bold flex items-center">
-                  <BookOpen className="h-4 w-4 mr-1" /> New Learner
-                </span>
-                <span className="bg-pastel-green px-3 py-1 rounded-full text-sm font-bold flex items-center">
-                  <Puzzle className="h-4 w-4 mr-1" /> Getting Started
-                </span>
-                <span className="bg-pastel-pink px-3 py-1 rounded-full text-sm font-bold flex items-center">
-                  <Calendar className="h-4 w-4 mr-1" /> Day 1
-                </span>
-              </div>
+              {!isParent && (
+                <div className="flex flex-wrap justify-center md:justify-start gap-3 mt-4">
+                  <span className="bg-pastel-yellow px-3 py-1 rounded-full text-sm font-bold flex items-center">
+                    <BookOpen className="h-4 w-4 mr-1" /> New Learner
+                  </span>
+                  <span className="bg-pastel-green px-3 py-1 rounded-full text-sm font-bold flex items-center">
+                    <Puzzle className="h-4 w-4 mr-1" /> Getting Started
+                  </span>
+                  <span className="bg-pastel-pink px-3 py-1 rounded-full text-sm font-bold flex items-center">
+                    <Calendar className="h-4 w-4 mr-1" /> Day 1
+                  </span>
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -722,30 +788,22 @@ const Profile = () => {
               <Award className="mr-2" /> Your Achievements
             </h2>
             <div className="grid grid-cols-3 gap-4">
-              <div className="bg-white/50 rounded-lg p-3 text-center opacity-50">
-                <Award className="h-10 w-10 text-gray-400 mx-auto" />
-                <div className="mt-2 text-sm font-bold">Reading Pro</div>
-              </div>
-              <div className="bg-white/50 rounded-lg p-3 text-center opacity-50">
-                <Award className="h-10 w-10 text-gray-400 mx-auto" />
-                <div className="mt-2 text-sm font-bold">Spelling Bee</div>
-              </div>
-              <div className="bg-white/50 rounded-lg p-3 text-center opacity-50">
-                <Award className="h-10 w-10 text-gray-400 mx-auto" />
-                <div className="mt-2 text-sm font-bold">Word Master</div>
-              </div>
-              <div className="bg-white/50 rounded-lg p-3 text-center opacity-50">
-                <Award className="h-10 w-10 text-gray-400 mx-auto" />
-                <div className="mt-2 text-sm font-bold">Story Maker</div>
-              </div>
-              <div className="bg-white/50 rounded-lg p-3 text-center opacity-50">
-                <Award className="h-10 w-10 text-gray-400 mx-auto" />
-                <div className="mt-2 text-sm font-bold">Game Wizard</div>
-              </div>
-              <div className="bg-white/50 rounded-lg p-3 text-center opacity-50">
-                <Award className="h-10 w-10 text-gray-400 mx-auto" />
-                <div className="mt-2 text-sm font-bold">Math Hero</div>
-              </div>
+              {[
+                { id: 'reading_pro', name: 'Reading Pro', icon: BookOpen },
+                { id: 'spelling_bee', name: 'Spelling Bee', icon: Type },
+                { id: 'word_master', name: 'Word Master', icon: Award },
+                { id: 'story_maker', name: 'Story Maker', icon: Book },
+                { id: 'game_wizard', name: 'Game Wizard', icon: Puzzle },
+                { id: 'math_hero', name: 'Math Hero', icon: Calculator } // Assuming Calculator icon or similar
+              ].map((achievement) => (
+                <div
+                  key={achievement.id}
+                  className={`bg-white/50 rounded-lg p-3 text-center transition-all duration-300 ${isUnlocked(achievement.id) ? 'opacity-100 scale-105 shadow-md bg-white' : 'opacity-40 grayscale'}`}
+                >
+                  <achievement.icon className={`h-10 w-10 mx-auto ${isUnlocked(achievement.id) ? 'text-yellow-500' : 'text-gray-400'}`} />
+                  <div className="mt-2 text-sm font-bold">{achievement.name}</div>
+                </div>
+              ))}
             </div>
           </div>
 
@@ -757,28 +815,37 @@ const Profile = () => {
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-sm font-bold">Reading Time</span>
-                  <span className="text-sm font-bold">0 hours</span>
+                  <span className="text-sm font-bold">{readingTimeHours} hours</span>
                 </div>
-                <div className="w-full bg-white/50 h-4 rounded-full">
-                  <div className="bg-blue-500 h-4 rounded-full w-0"></div>
+                <div className="w-full bg-white/50 h-4 rounded-full overflow-hidden">
+                  <div
+                    className="bg-blue-500 h-4 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(readingTimeHours * 20, 100)}%` }} // 5 hours max
+                  ></div>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-sm font-bold">Games Completed</span>
-                  <span className="text-sm font-bold">0/15</span>
+                  <span className="text-sm font-bold">{userData?.gamesPlayed || 0}/15</span>
                 </div>
-                <div className="w-full bg-white/50 h-4 rounded-full">
-                  <div className="bg-pink-500 h-4 rounded-full w-0"></div>
+                <div className="w-full bg-white/50 h-4 rounded-full overflow-hidden">
+                  <div
+                    className="bg-pink-500 h-4 rounded-full transition-all duration-500"
+                    style={{ width: `${gamesProgress}%` }}
+                  ></div>
                 </div>
               </div>
               <div>
                 <div className="flex justify-between items-center mb-1">
                   <span className="text-sm font-bold">New Words Learned</span>
-                  <span className="text-sm font-bold">0/20</span>
+                  <span className="text-sm font-bold">{wordsLearned}/20</span>
                 </div>
-                <div className="w-full bg-white/50 h-4 rounded-full">
-                  <div className="bg-green-500 h-4 rounded-full w-0"></div>
+                <div className="w-full bg-white/50 h-4 rounded-full overflow-hidden">
+                  <div
+                    className="bg-green-500 h-4 rounded-full transition-all duration-500"
+                    style={{ width: `${Math.min(wordsLearned * 5, 100)}%` }}
+                  ></div>
                 </div>
               </div>
             </div>

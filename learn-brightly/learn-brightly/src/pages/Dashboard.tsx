@@ -66,7 +66,7 @@ const Index = () => {
           .from('user_progress')
           .select('*')
           .eq('user_id', user.id)
-          .single();
+          .maybeSingle();
 
         const latestScore = scores && scores.length > 0 ? scores[0] : null;
 

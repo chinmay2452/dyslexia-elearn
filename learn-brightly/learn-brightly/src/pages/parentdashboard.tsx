@@ -87,7 +87,7 @@ const ParentDashboard: React.FC = () => {
         .from('user_progress')
         .select('*')
         .eq('user_id', student.id)
-        .single();
+        .maybeSingle();
 
       const newChild: ChildProgress = {
         id: student.id,
@@ -165,7 +165,7 @@ const ParentDashboard: React.FC = () => {
               .from('user_progress')
               .select('*')
               .eq('user_id', child.id)
-              .single();
+              .maybeSingle();
 
             return {
               id: child.id,
