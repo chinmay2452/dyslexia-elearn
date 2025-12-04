@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
+import supabase from '../../supabase';
 import DyslexiaHeader from '../components/DyslexiaHeader';
-import { User, Award, BookOpen, Settings, Bell, Puzzle, Calendar, TextCursor, AlignJustify, Type, Mail, UserCircle, BellOff, BellRing, CheckCircle2, Clock } from 'lucide-react';
+import { User, Award, BookOpen, Settings, Bell, Puzzle, Calendar, TextCursor, AlignJustify, Type, Mail, Loader2 } from 'lucide-react';
 import { Button } from "../components/button";
 import { useNavigate } from 'react-router-dom';
 import {
@@ -21,7 +22,7 @@ import {
   SelectTrigger,
   SelectValue
 } from "../components/select";
-import { Loader2 } from 'lucide-react';
+
 
 interface UserData {
   username: string;
@@ -225,10 +226,10 @@ const AccountSettingsSheet = ({ open, setOpen }: { open: boolean, setOpen: (v: b
       setLoading(true);
       setError(null);
       setSuccess(false);
-      
+
       const token = localStorage.getItem('token');
       const storedUser = localStorage.getItem('user');
-      
+
       if (storedUser) {
         try {
           const userData = JSON.parse(storedUser);
@@ -264,7 +265,7 @@ const AccountSettingsSheet = ({ open, setOpen }: { open: boolean, setOpen: (v: b
     setSaving(true);
     setError(null);
     setSuccess(false);
-    
+
     const token = localStorage.getItem('token');
     try {
       const payload = {
@@ -396,16 +397,16 @@ const AccountSettingsSheet = ({ open, setOpen }: { open: boolean, setOpen: (v: b
         </div>
 
         <SheetFooter>
-          <Button 
-            variant="outline" 
-            onClick={() => setOpen(false)} 
+          <Button
+            variant="outline"
+            onClick={() => setOpen(false)}
             disabled={loading}
           >
             Cancel
           </Button>
-          <Button 
-            onClick={handleSave} 
-            disabled={loading} 
+          <Button
+            onClick={handleSave}
+            disabled={loading}
             className="ml-2"
           >
             {loading ? 'Saving...' : 'Save Changes'}
@@ -416,11 +417,11 @@ const AccountSettingsSheet = ({ open, setOpen }: { open: boolean, setOpen: (v: b
   );
 };
 
-function NotificationSettingsSheet({ 
-  open, 
-  onOpenChange 
-}: { 
-  open: boolean; 
+function NotificationSettingsSheet({
+  open,
+  onOpenChange
+}: {
+  open: boolean;
   onOpenChange: (open: boolean) => void;
 }) {
   const [settings, setSettings] = useState<NotificationSettings>({
@@ -551,7 +552,7 @@ function NotificationSettingsSheet({
               <Label className="text-base font-medium">Reminder Frequency</Label>
               <Select
                 value={settings.reminderFrequency}
-                onValueChange={(value: 'daily' | 'weekly' | 'none') => 
+                onValueChange={(value: 'daily' | 'weekly' | 'none') =>
                   setSettings(prev => ({ ...prev, reminderFrequency: value }))
                 }
               >
@@ -568,9 +569,8 @@ function NotificationSettingsSheet({
           </div>
 
           {message && (
-            <div className={`p-3 rounded-lg ${
-              message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
-            }`}>
+            <div className={`p-3 rounded-lg ${message.type === 'success' ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'
+              }`}>
               {message.text}
             </div>
           )}
@@ -610,48 +610,75 @@ const Profile = () => {
   const [showPreferences, setShowPreferences] = useState(false);
   const [showAccountSettings, setShowAccountSettings] = useState(false);
   const [notificationSettingsOpen, setNotificationSettingsOpen] = useState(false);
-  
+
   // Check if user is a parent to apply normal font styling
   const isParent = userData?.role === 'parent';
 
+
+
   useEffect(() => {
     const fetchUserData = async () => {
+      const storedUser = localStorage.getItem('user');
+      if (!storedUser) {
+        navigate('/');
+        return;
+      }
+
       try {
-        const token = localStorage.getItem('token');
-        if (!token) {
-          navigate('/');
-          return;
+        const user = JSON.parse(storedUser);
+
+        // Fetch fresh data from Supabase
+        const { data: profile, error } = await supabase
+          .from('users')
+          .select('*')
+          .eq('id', user.id)
+          .single();
+
+        if (profile) {
+          setUserData({
+            username: profile.full_name,
+            email: profile.email,
+            age: profile.age?.toString() || '',
+            guardianName: profile.guardian_name || '',
+            role: profile.role
+          });
+        } else {
+          // Fallback to stored user data if fetch fails
+          setUserData({
+            username: user.full_name || user.fullName || '',
+            email: user.email || '',
+            age: user.age?.toString() || '',
+            guardianName: user.guardianName || user.guardian_name || '',
+            role: user.role || 'student'
+          });
         }
-
-        const response = await fetch('http://localhost:5000/api/auth/verify', {
-          headers: {
-            'Authorization': `Bearer ${token}`
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to fetch user data');
-        }
-
-        const data = await response.json();
-        setUserData(data.user);
       } catch (error) {
         console.error('Error fetching user data:', error);
-        navigate('/');
+        // Use stored data as fallback
+        try {
+          const user = JSON.parse(storedUser);
+          setUserData({
+            username: user.full_name || user.fullName || '',
+            email: user.email || '',
+            age: user.age?.toString() || '',
+            guardianName: user.guardianName || user.guardian_name || '',
+            role: user.role || 'student'
+          });
+        } catch (e) {
+          navigate('/');
+        }
       }
     };
 
     fetchUserData();
   }, [navigate]);
 
-  const handleUserUpdate = (updatedUser: UserData) => {
-    setUserData(updatedUser);
-  };
+
 
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-pastel-purple/30 pb-24" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>
       <DyslexiaHeader />
-      
+
       <main className="max-w-6xl mx-auto px-4 py-6">
         <div className="bg-pastel-blue rounded-2xl p-6 shadow-lg mb-8">
           <div className="flex flex-col md:flex-row items-center gap-6">
@@ -688,7 +715,7 @@ const Profile = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
           <div className="bg-pastel-green rounded-xl p-6 shadow-md">
             <h2 className="text-xl font-bold mb-4 flex items-center">
@@ -721,7 +748,7 @@ const Profile = () => {
               </div>
             </div>
           </div>
-          
+
           <div className="bg-pastel-yellow rounded-xl p-6 shadow-md">
             <h2 className="text-xl font-bold mb-4 flex items-center">
               <Calendar className="mr-2" /> Weekly Progress
@@ -755,11 +782,11 @@ const Profile = () => {
                 </div>
               </div>
             </div>
-            
+
             <Button className="w-full mt-6 rounded-xl">View Full Report</Button>
           </div>
         </div>
-        
+
         <h2 className="text-2xl font-bold mb-4">Settings</h2>
         <div className="bg-white/70 rounded-xl p-6 shadow-md">
           <div className="space-y-4">
@@ -788,9 +815,9 @@ const Profile = () => {
                 <User className="mr-3" />
                 <span className="font-bold">Account Settings</span>
               </div>
-              <Button 
-                variant="outline" 
-                size="default" 
+              <Button
+                variant="outline"
+                size="default"
                 onClick={() => setShowAccountSettings(true)}
               >
                 Edit
@@ -800,8 +827,8 @@ const Profile = () => {
         </div>
       </main>
       <ReadingPreferencesSheet open={showPreferences} setOpen={setShowPreferences} />
-      <AccountSettingsSheet 
-        open={showAccountSettings} 
+      <AccountSettingsSheet
+        open={showAccountSettings}
         setOpen={setShowAccountSettings}
       />
       <NotificationSettingsSheet

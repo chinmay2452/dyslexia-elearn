@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import supabase from '../../supabase';
 import { Button } from "../components/button";
 import { RadioGroup, RadioGroupItem } from "../components/radio-group";
 import { useToast } from "../hooks/use-toast";
@@ -132,17 +133,46 @@ const DyslexiaTest = () => {
     }
   };
 
-  const calculateResults = () => {
+  const calculateResults = async () => {
     let totalScore = 0;
-    
+
     // Calculate total score
     Object.values(answers).forEach(value => {
       totalScore += parseInt(value);
     });
-    
+
     const maxPossibleScore = totalQuestions * 3; // 3 is the max value per question
     const percentageScore = Math.round((totalScore / maxPossibleScore) * 100);
-    
+
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        const { error } = await supabase
+          .from('dyslexia_score')
+          .insert({
+            user: user.id,
+            score: percentageScore
+          });
+
+        if (error) {
+          console.error('Error saving score:', error);
+          toast({
+            title: "Error saving score",
+            description: "There was a problem saving your test results.",
+            variant: "destructive"
+          });
+        } else {
+          toast({
+            title: "Score saved",
+            description: "Your test results have been saved successfully.",
+          });
+        }
+      }
+    } catch (error) {
+      console.error('Error in calculateResults:', error);
+    }
+
     setScore(percentageScore);
     setTestCompleted(true);
   };
@@ -150,22 +180,22 @@ const DyslexiaTest = () => {
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-pastel-blue/30 pb-24">
       <DyslexiaHeader />
-      
+
       <main className="max-w-4xl mx-auto px-4 py-6">
         {!testCompleted ? (
           <div className="bg-white rounded-2xl p-6 shadow-lg animate-pop">
             <div className="mb-6">
               <h1 className="text-2xl font-bold mb-2">Dyslexia Screening Test</h1>
               <ReadingText>
-                Answer these questions to help identify if you might have signs of dyslexia. 
+                Answer these questions to help identify if you might have signs of dyslexia.
                 This is not a formal diagnosis but can help you understand if you should seek further assessment.
               </ReadingText>
             </div>
-            
+
             <div className="relative mb-6">
               <div className="w-full bg-gray-200 rounded-full h-2.5">
-                <div 
-                  className="bg-pastel-purple h-2.5 rounded-full transition-all duration-300 ease-in-out" 
+                <div
+                  className="bg-pastel-purple h-2.5 rounded-full transition-all duration-300 ease-in-out"
                   style={{ width: `${((currentQuestionIndex + 1) / totalQuestions) * 100}%` }}
                 ></div>
               </div>
@@ -173,11 +203,11 @@ const DyslexiaTest = () => {
                 Question {currentQuestionIndex + 1} of {totalQuestions}
               </span>
             </div>
-            
+
             <div className="mb-8 p-4 bg-pastel-peach/30 rounded-xl">
               <h2 className="text-xl font-bold mb-4">{currentQuestion.question}</h2>
-              
-              <RadioGroup 
+
+              <RadioGroup
                 value={answers[currentQuestion.id] || ""}
                 onValueChange={handleOptionSelect}
                 className="space-y-3"
@@ -185,7 +215,7 @@ const DyslexiaTest = () => {
                 {currentQuestion.options.map((option) => (
                   <div key={option.value} className="flex items-center space-x-2 bg-white p-3 rounded-lg hover:bg-pastel-blue/10 transition">
                     <RadioGroupItem value={option.value} id={`${currentQuestion.id}-${option.value}`} />
-                    <label 
+                    <label
                       htmlFor={`${currentQuestion.id}-${option.value}`}
                       className="text-base flex-grow cursor-pointer"
                     >
@@ -195,7 +225,7 @@ const DyslexiaTest = () => {
                 ))}
               </RadioGroup>
             </div>
-            
+
             <div className="flex justify-between items-center">
               <button
                 onClick={handlePrevious}
@@ -204,9 +234,9 @@ const DyslexiaTest = () => {
               >
                 <ArrowLeft className="h-4 w-4" /> Previous
               </button>
-              
-              <Button 
-                onClick={handleNext}  
+
+              <Button
+                onClick={handleNext}
                 className="flex items-center gap-2"
               >
                 {currentQuestionIndex < totalQuestions - 1 ? (

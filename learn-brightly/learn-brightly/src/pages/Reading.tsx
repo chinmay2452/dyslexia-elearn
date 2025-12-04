@@ -1,6 +1,8 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Button } from "../components/button";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
+import supabase from '../../supabase';
+import { useToast } from "../hooks/use-toast";
 import DyslexiaHeader from '../components/DyslexiaHeader';
 import ReadingText from '../components/ReadingText';
 import { BookOpen, Volume2, ArrowRight, Book } from 'lucide-react';
@@ -75,7 +77,7 @@ const Reading = () => {
     const loadVoices = () => {
       const availableVoices = window.speechSynthesis.getVoices();
       // Filter only English voices
-      const englishVoices = availableVoices.filter(voice => 
+      const englishVoices = availableVoices.filter(voice =>
         voice.lang.includes('en') || voice.lang.includes('en-US') || voice.lang.includes('en-GB')
       );
       setVoices(englishVoices);
@@ -115,13 +117,13 @@ const Reading = () => {
     setReadingIndex(index);
     const utter = new window.SpeechSynthesisUtterance(selectedStory.parts[index]);
     utter.rate = 0.95;
-    
+
     // Set the selected voice
     const voice = voices.find(v => v.name === selectedVoice);
     if (voice) {
       utter.voice = voice;
     }
-    
+
     utter.onend = () => {
       readPart(index + 1);
     };
@@ -136,13 +138,13 @@ const Reading = () => {
   const speakWord = (word: string) => {
     const utter = new window.SpeechSynthesisUtterance(word);
     utter.rate = 0.9; // Slightly slower for better understanding
-    
+
     // Set the selected voice
     const voice = voices.find(v => v.name === selectedVoice);
     if (voice) {
       utter.voice = voice;
     }
-    
+
     window.speechSynthesis.speak(utter);
   };
 
@@ -156,22 +158,75 @@ const Reading = () => {
     }
   };
 
+  const navigate = useNavigate();
+  const { toast } = useToast();
+
+  const handleFinishStory = async () => {
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+
+      if (user) {
+        // 1. Get current progress
+        const { data: currentProgress } = await supabase
+          .from('user_progress')
+          .select('*')
+          .eq('user_id', user.id)
+          .single();
+
+        const currentXP = currentProgress?.xp || 0;
+        const currentStories = currentProgress?.stories_read || 0;
+
+        // 2. Update progress (Add 30 XP for reading)
+        const xpEarned = 30;
+
+        await supabase
+          .from('user_progress')
+          .upsert({
+            user_id: user.id,
+            xp: currentXP + xpEarned,
+            stories_read: currentStories + 1,
+            last_activity_date: new Date().toISOString()
+          });
+
+        toast({
+          title: "Great Job!",
+          description: `You finished the story and earned ${xpEarned} XP!`,
+        });
+
+        navigate('/dashboard');
+      } else {
+        toast({
+          title: "Not logged in",
+          description: "Please log in to save your progress.",
+          variant: "destructive"
+        });
+      }
+    } catch (error) {
+      console.error('Error saving progress:', error);
+      toast({
+        title: "Error",
+        description: "Failed to save progress.",
+        variant: "destructive"
+      });
+    }
+  };
+
   return (
     <div className="min-h-screen bg-gradient-to-b from-background to-pastel-blue/30 pb-24">
       <DyslexiaHeader />
-      
+
       <main className="max-w-6xl mx-auto px-4 py-6">
         <h1 className="text-3xl font-bold mb-6 flex items-center">
           <Book className="mr-2 text-primary" />
           Reading Practice
         </h1>
-        
+
         <div className="bg-pastel-yellow rounded-2xl p-6 shadow-lg mb-8">
           <div className="flex justify-between items-center mb-4">
             <div className="flex items-center gap-4">
               <h2 className="text-2xl font-bold">Today's Story</h2>
-              <Select 
-                value={selectedStory.id.toString()} 
+              <Select
+                value={selectedStory.id.toString()}
                 onValueChange={(value) => handleStoryChange(parseInt(value))}
               >
                 <SelectTrigger className="w-[200px] bg-white/90 hover:bg-white text-gray-900">
@@ -199,32 +254,31 @@ const Reading = () => {
                   ))}
                 </SelectContent>
               </Select>
-              <Button 
-                variant="outline" 
-                size="default" 
+              <Button
+                variant="outline"
+                size="default"
                 className={`flex items-center gap-2 bg-white/70 hover:bg-white ${isReading ? 'bg-pastel-green/60' : ''}`}
                 onClick={handleReadAloud}
               >
-                <Volume2 className="h-5 w-5" /> 
+                <Volume2 className="h-5 w-5" />
                 {isReading ? 'Stop' : 'Read Aloud'}
               </Button>
             </div>
           </div>
-          
+
           <div className="space-y-4">
             {selectedStory.parts.map((part, index) => (
-              <div 
+              <div
                 key={index}
-                className={`p-4 rounded-xl transition-colors ${
-                  readingIndex === index ? 'bg-white/80' : 'bg-white/50'
-                }`}
+                className={`p-4 rounded-xl transition-colors ${readingIndex === index ? 'bg-white/80' : 'bg-white/50'
+                  }`}
               >
                 <ReadingText>
                   {part}
                 </ReadingText>
                 {index === 0 && (
                   <div className="my-6 flex justify-center">
-                    <img 
+                    <img
                       src={selectedStory.image}
                       alt={`Illustration for ${selectedStory.title}`}
                       className="rounded-xl shadow-md max-h-64 object-cover"
@@ -233,6 +287,15 @@ const Reading = () => {
                 )}
               </div>
             ))}
+
+            <div className="flex justify-center mt-8">
+              <Button
+                onClick={handleFinishStory}
+                className="bg-green-500 hover:bg-green-600 text-white text-lg px-8 py-6 rounded-xl shadow-lg transform transition hover:scale-105"
+              >
+                Finish Story & Earn XP!
+              </Button>
+            </div>
           </div>
         </div>
 
@@ -244,8 +307,8 @@ const Reading = () => {
                 <li key={index} className="bg-white/50 rounded-lg p-2">
                   <div className="flex justify-between items-center mb-1">
                     <span className="font-bold">{wordObj.word}</span>
-                    <Button 
-                      size="default" 
+                    <Button
+                      size="default"
                       variant="outline"
                       className="hover:bg-white/70"
                       onClick={() => speakWord(wordObj.word)}
@@ -258,7 +321,7 @@ const Reading = () => {
               ))}
             </ul>
           </div>
-          
+
           <div className="md:col-span-2 bg-pastel-blue rounded-xl p-4 shadow-md">
             <h3 className="font-bold text-lg mb-2">Reading Tips</h3>
             <ul className="space-y-2">

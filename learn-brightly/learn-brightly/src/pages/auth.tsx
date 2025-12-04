@@ -27,7 +27,7 @@ const AuthPage: React.FC = () => {
     password: string;
     age: number | null;
     guardianName: string;
-    dyslexiaScore: number | null;
+    phoneNumber?: string;
   }
 
   const [signupData, setSignupData] = useState<SignupData>({
@@ -36,7 +36,7 @@ const AuthPage: React.FC = () => {
     password: "",
     age: null,
     guardianName: "",
-    dyslexiaScore: null,
+    phoneNumber: "",
   });
 
   // Get user type from URL (example: ?userType=parent)
@@ -46,6 +46,17 @@ const AuthPage: React.FC = () => {
       setUserType(urlUserType);
     }
   }, [searchParams]);
+
+  // Validation helpers
+  const validateEmail = (email: string) => {
+    const re = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+    return re.test(email);
+  };
+
+  const validatePhone = (phone: string) => {
+    const re = /^\d{10}$/;
+    return re.test(phone);
+  };
 
   const handleSignup = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,11 +68,30 @@ const AuthPage: React.FC = () => {
       if (!signupData.fullName || !signupData.email || !signupData.password) {
         throw new Error("Please fill all required fields.");
       }
-      if (
-        userType === "student" &&
-        (!signupData.age || !signupData.guardianName)
-      ) {
-        throw new Error("Please fill age and guardian name for student.");
+
+      // Validate Email
+      if (!validateEmail(signupData.email)) {
+        throw new Error("Please enter a valid email address with a domain (e.g., user@example.com).");
+      }
+
+      if (userType === "student") {
+        if (!signupData.age || !signupData.guardianName) {
+          throw new Error("Please fill age and guardian name for student.");
+        }
+        // Validate Age
+        if (isNaN(Number(signupData.age)) || Number(signupData.age) <= 0) {
+          throw new Error("Age must be a valid positive number.");
+        }
+      }
+
+      if (userType === "parent") {
+        if (!signupData.phoneNumber) {
+          throw new Error("Please fill phone number for parent.");
+        }
+        // Validate Phone Number
+        if (!validatePhone(signupData.phoneNumber)) {
+          throw new Error("Phone number must be exactly 10 digits.");
+        }
       }
 
       // Supabase Auth signup
@@ -71,21 +101,39 @@ const AuthPage: React.FC = () => {
       });
       if (authError) throw new Error(authError.message);
 
-      // Prepare insert data for 'users' table
-      const userInsert = {
-        id: authData.user?.id,
-        full_name: signupData.fullName,
-        email: signupData.email,
-        role: userType,
-        age: signupData.age ?? null,
-        guardian_name: signupData.guardianName || null,
-        dyslexia_score: signupData.dyslexiaScore ?? null,
-      };
+      if (userType === "parent") {
+        // Insert into parents table
+        const { error: insertError } = await supabase
+          .from("parents")
+          .insert([
+            {
+              id: authData.user?.id,
+              parent_name: signupData.fullName,
+              contact_email: signupData.email,
+              phone_number: signupData.phoneNumber,
+            },
+          ]);
+        if (insertError) throw new Error(insertError.message);
+      } else {
+        // Generate unique student code
+        const studentCode = Math.random().toString(36).substring(2, 8).toUpperCase();
 
-      const { error: insertError } = await supabase
-        .from("users")
-        .insert([userInsert]);
-      if (insertError) throw new Error(insertError.message);
+        // Insert into users table (for students)
+        const userInsert = {
+          id: authData.user?.id,
+          full_name: signupData.fullName,
+          email: signupData.email,
+          role: userType,
+          age: signupData.age ?? null,
+          guardian_name: signupData.guardianName || null,
+          student_code: studentCode,
+        };
+
+        const { error: insertError } = await supabase
+          .from("users")
+          .insert([userInsert]);
+        if (insertError) throw new Error(insertError.message);
+      }
 
       // Store local data
       localStorage.setItem(
@@ -95,6 +143,7 @@ const AuthPage: React.FC = () => {
           email: signupData.email,
           fullName: signupData.fullName,
           role: userType,
+          ...(userType === "parent" ? { phoneNumber: signupData.phoneNumber } : {}),
         })
       );
 
@@ -118,6 +167,10 @@ const AuthPage: React.FC = () => {
     setError("");
 
     try {
+      if (!validateEmail(loginData.email)) {
+        throw new Error("Please enter a valid email address.");
+      }
+
       const { data: authData, error: authError } =
         await supabase.auth.signInWithPassword({
           email: loginData.email,
@@ -125,19 +178,53 @@ const AuthPage: React.FC = () => {
         });
       if (authError) throw new Error(authError.message);
 
-      const { data: userData, error: userError } = await supabase
+      // Try fetching from users table first
+      let { data: userData } = await supabase
         .from("users")
         .select("*")
         .eq("email", loginData.email)
-        .single();
-      if (userError) throw new Error("User profile not found");
+        .maybeSingle();
+
+      let role = userData?.role;
+
+      // If not found in users, try parents table
+      if (!userData) {
+        const { data: parentData } = await supabase
+          .from("parents")
+          .select("*")
+          .eq("contact_email", loginData.email)
+          .maybeSingle();
+
+        if (parentData) {
+          userData = {
+            ...parentData,
+            full_name: parentData.parent_name,
+            email: parentData.contact_email,
+            role: "parent"
+          };
+          role = "parent";
+        } else {
+          throw new Error("User profile not found");
+        }
+      }
 
       localStorage.setItem("user", JSON.stringify(userData));
 
-      if (userData.role === "parent") {
+      if (role === "parent") {
         navigate("/parentdashboard");
       } else {
-        navigate("/dashboard");
+        // Check if student has taken dyslexia test
+        const { data: scores } = await supabase
+          .from("dyslexia_score")
+          .select("id")
+          .eq("user", authData.user.id)
+          .limit(1);
+
+        if (scores && scores.length > 0) {
+          navigate("/dashboard");
+        } else {
+          navigate("/dyslexia-test");
+        }
       }
     } catch (err: any) {
       setError(err.message);
@@ -290,6 +377,22 @@ const AuthPage: React.FC = () => {
                       className="rounded-xl text-black mt-3"
                     />
                   </>
+                )}
+
+                {userType === "parent" && (
+                  <Input
+                    type="tel"
+                    value={signupData.phoneNumber}
+                    onChange={(e) =>
+                      setSignupData({
+                        ...signupData,
+                        phoneNumber: e.target.value,
+                      })
+                    }
+                    placeholder="Phone Number"
+                    className="rounded-xl text-black mt-3"
+                    required
+                  />
                 )}
 
                 <Input
