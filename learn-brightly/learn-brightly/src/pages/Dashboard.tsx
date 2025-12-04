@@ -190,7 +190,7 @@ const Index = () => {
         <LearningCategories />
 
         {/* Learning Modules */}
-        <LearningModules />
+        <LearningModules dyslexiaScore={userData?.dyslexiaScore} />
 
         {/* Tips Section */}
         <div className="bg-pastel-green rounded-2xl p-6 mt-8 shadow-md">
