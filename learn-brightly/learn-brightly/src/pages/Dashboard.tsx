@@ -4,6 +4,11 @@ import { Button } from "../components/button";
 import { Link, useNavigate } from "react-router-dom";
 import DyslexiaHeader from '../components/DyslexiaHeader';
 import ProgressTracker from '../components/ProgressTracker';
+import Achievements from '../components/Achievements';
+import PersonalizedTips from '../components/PersonalizedTips';
+import AdaptiveRecommendations from '../components/AdaptiveRecommendations';
+// import SkillProgress from '../components/SkillProgress';
+// import PreferenceTracker from '../components/PreferenceTracker';
 import LearningCategories from '../components/LearningCategories';
 import LearningModules from '../components/LearningModules';
 import { Lightbulb, Book, Puzzle, ClipboardCheck } from 'lucide-react';
@@ -28,6 +33,40 @@ const Index = () => {
   const [userData, setUserData] = useState<UserData | null>(null);
 
   const navigate = useNavigate();
+
+  // Time-based greeting
+  const getTimeBasedGreeting = () => {
+    const hour = new Date().getHours();
+    if (hour < 12) {
+      return { greeting: 'Good morning! ☀️', message: 'Start your day with some learning!' };
+    } else if (hour < 18) {
+      return { greeting: 'Good afternoon! 🌤️', message: 'Keep up the great work!' };
+    } else {
+      return { greeting: 'Good evening! 🌙', message: 'Perfect time for some evening learning!' };
+    }
+  };
+
+  // Activity-based message
+  const getActivityMessage = () => {
+    if (!userData?.storiesRead) {
+      return "Let's start your reading journey today!";
+    }
+    if (userData.storiesRead < 5 && userData.gamesPlayed < 3) {
+      return "Great! Keep exploring more stories and games!";
+    }
+    if (userData.storiesRead >= 50 && userData.gamesPlayed >= 20) {
+      return "Wow! You're an amazing learner! Keep breaking records!";
+    }
+    if (userData.gamesPlayed >= 20) {
+      return "You're a gaming superstar! 🎮 Try some reading too!";
+    }
+    if (userData.storiesRead >= 30) {
+      return "You're a reading champion! 📚 Challenge yourself with our games!";
+    }
+    return "Ready to continue your learning adventure? We've got some fun activities just for you today!";
+  };
+
+  const timeGreeting = getTimeBasedGreeting();
 
   // Check if user is a parent to apply normal font styling
   const isParent = userData?.role === 'parent';
@@ -98,8 +137,9 @@ const Index = () => {
 
       <main className="max-w-6xl mx-auto px-4 py-6">
         {/* Welcome Message */}
-        <div className="bg-pastel-peach rounded-2xl p-6 mb-8 shadow-lg flex flex-col md:flex-row items-center gap-6 animate-pop">
+        <div className="bg-gradient-to-br from-pastel-peach to-pastel-yellow/40 rounded-2xl p-6 mb-8 shadow-lg flex flex-col md:flex-row items-center gap-6 animate-pop">
           <div className="flex-1">
+            <div className="mb-2 text-2xl font-bold text-pastel-purple">{timeGreeting.greeting}</div>
             <h1 className="text-3xl font-bold mb-4" style={isParent ? { fontFamily: 'Arial, sans-serif' } : {}}>Welcome back, {userData?.username || 'User'}!</h1>
 
             {userData?.studentCode && (
@@ -112,13 +152,11 @@ const Index = () => {
 
             {isParent ? (
               <p className="text-lg mb-4" style={{ fontFamily: 'Arial, sans-serif' }}>
-                Ready to continue your learning adventure?
-                We've got some fun activities just for you today!
+                {getActivityMessage()}
               </p>
             ) : (
               <ReadingText size="lg">
-                Ready to continue your learning adventure?
-                We've got some fun activities just for you today!
+                {getActivityMessage()}
               </ReadingText>
             )}
             <div className="flex flex-wrap gap-3 mt-4">
@@ -178,6 +216,15 @@ const Index = () => {
           </div>
         </div>
 
+        {/* Adaptive Recommendations */}
+        <AdaptiveRecommendations
+          dyslexiaScore={userData?.dyslexiaScore}
+          lastTestDate={userData?.lastTestDate}
+          storiesRead={userData?.storiesRead || 0}
+          gamesPlayed={userData?.gamesPlayed || 0}
+          xp={userData?.xp || 0}
+        />
+
         {/* Progress Section */}
         <ProgressTracker
           xp={userData?.xp || 0}
@@ -186,25 +233,51 @@ const Index = () => {
           storiesRead={userData?.storiesRead || 0}
         />
 
+        {/* Achievements Section */}
+        <Achievements
+          xp={userData?.xp || 0}
+          streak={userData?.streak || 0}
+          gamesPlayed={userData?.gamesPlayed || 0}
+          storiesRead={userData?.storiesRead || 0}
+          dyslexiaScore={userData?.dyslexiaScore}
+        />
+
+        {/* Skill Progress Visualization */}
+        {/* <SkillProgress
+          storiesRead={userData?.storiesRead || 0}
+          gamesPlayed={userData?.gamesPlayed || 0}
+          writingActivities={0}
+          spellingAttempts={0}
+          dyslexiaScore={userData?.dyslexiaScore}
+        /> */}
+
+        {/* Preference Tracker */}
+        {/* <PreferenceTracker
+          gamesPlayed={userData?.gamesPlayed || 0}
+          storiesRead={userData?.storiesRead || 0}
+        /> */}
+
+        {/* Personalized Tips */}
+        <PersonalizedTips
+          dyslexiaScore={userData?.dyslexiaScore}
+          storiesRead={userData?.storiesRead || 0}
+          gamesPlayed={userData?.gamesPlayed || 0}
+          streak={userData?.streak || 0}
+        />
+
         {/* Categories */}
         <LearningCategories />
 
         {/* Learning Modules */}
-        <LearningModules />
-
-        {/* Tips Section */}
-        <div className="bg-pastel-green rounded-2xl p-6 mt-8 shadow-md">
-          <h2 className="text-xl font-bold mb-2">Reading Tip of the Day</h2>
-          <ReadingText>
-            Try using a ruler or bookmark under each line as you read.
-            This helps your eyes focus on one line at a time!
-          </ReadingText>
-        </div>
+        <LearningModules dyslexiaScore={userData?.dyslexiaScore} />
       </main>
 
-      <footer className="bg-pastel-purple mt-12 py-6 rounded-t-2xl">
+      <footer className="bg-gradient-to-r from-pastel-purple to-pastel-blue mt-12 py-8 rounded-t-3xl shadow-lg">
         <div className="max-w-6xl mx-auto px-4 text-center">
-          <p className="font-bold">Learn Brightly - Making learning fun for everyone!</p>
+          <p className="font-bold text-white text-lg mb-2">Learn Brightly - Making learning fun for everyone! 🌟</p>
+          <p className="text-white/80 text-sm">
+            {userData?.streak && userData.streak > 0 ? `You're on a ${userData.streak}-day streak! Keep it up! 🔥` : 'Start your learning journey today!'}
+          </p>
         </div>
       </footer>
     </div>
